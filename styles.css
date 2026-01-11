@@ -213,12 +213,20 @@ body {
     min-height: 0;
 }
 
-.tabs {
+.tabs-container {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
     border-bottom: 2px solid #e0e0e0;
     flex-shrink: 0;
+    gap: 20px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    flex: 1;
 }
 
 .tab-button {
@@ -244,6 +252,56 @@ body {
     color: #667eea;
     border-bottom-color: #667eea;
     font-weight: 600;
+}
+
+.estadisticas-trabajos {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding: 8px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.estadistica-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.estadistica-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.estadistica-valor {
+    font-weight: 700;
+    color: #333;
+    min-width: 25px;
+    text-align: center;
+}
+
+.estadistica-item.estado-solicitado .estadistica-valor {
+    color: #ff9800;
+}
+
+.estadistica-item.estado-ejecutado .estadistica-valor {
+    color: #2196f3;
+}
+
+.estadistica-item.estado-cerrado .estadistica-valor {
+    color: #4caf50;
+}
+
+.estadistica-texto {
+    color: #999;
+    font-style: italic;
 }
 
 .tab-content {

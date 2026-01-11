@@ -97,6 +97,9 @@ function handleFileUpload(event) {
                 generarGantt();
             }
             
+            // Actualizar estadísticas
+            actualizarEstadisticasTrabajos();
+            
             // Habilitar botón de exportar
             exportBtn.disabled = false;
             
@@ -370,6 +373,9 @@ function handleDropListado(e) {
     if (document.getElementById('ganttTab').classList.contains('active')) {
         generarGantt();
     }
+    
+    // Actualizar estadísticas
+    actualizarEstadisticasTrabajos();
 }
 
 // Generar calendarios basado en las fechas seleccionadas
@@ -444,6 +450,59 @@ function actualizarCalendario() {
     if (document.getElementById('ganttTab').classList.contains('active')) {
         generarGantt();
     }
+    // Actualizar estadísticas
+    actualizarEstadisticasTrabajos();
+}
+
+// Función para actualizar las estadísticas de trabajos
+function actualizarEstadisticasTrabajos() {
+    const estadisticasContainer = document.getElementById('estadisticasTrabajos');
+    if (!estadisticasContainer) return;
+    
+    // Contar trabajos por estado
+    let totalTrabajos = 0;
+    let solicitados = 0;
+    let ejecutados = 0;
+    let cerrados = 0;
+    
+    // Contar solo trabajos asignados al calendario
+    trabajosAsignados.forEach(indice => {
+        totalTrabajos++;
+        const estado = estadosPermisos.get(indice) || 'SOLICITADO';
+        if (estado === 'SOLICITADO') {
+            solicitados++;
+        } else if (estado === 'EJECUTADO') {
+            ejecutados++;
+        } else if (estado === 'CERRADO') {
+            cerrados++;
+        }
+    });
+    
+    // Si no hay trabajos asignados, mostrar mensaje
+    if (totalTrabajos === 0) {
+        estadisticasContainer.innerHTML = '<span class="estadistica-texto">Sin trabajos asignados</span>';
+        return;
+    }
+    
+    // Crear HTML de estadísticas
+    estadisticasContainer.innerHTML = `
+        <div class="estadistica-item">
+            <span class="estadistica-label">Total:</span>
+            <span class="estadistica-valor">${totalTrabajos}</span>
+        </div>
+        <div class="estadistica-item estado-solicitado">
+            <span class="estadistica-label">Solicitados:</span>
+            <span class="estadistica-valor">${solicitados}</span>
+        </div>
+        <div class="estadistica-item estado-ejecutado">
+            <span class="estadistica-label">Ejecutados:</span>
+            <span class="estadistica-valor">${ejecutados}</span>
+        </div>
+        <div class="estadistica-item estado-cerrado">
+            <span class="estadistica-label">Cerrados:</span>
+            <span class="estadistica-valor">${cerrados}</span>
+        </div>
+    `;
 }
 
 // Generar un mes del calendario
@@ -830,6 +889,9 @@ function mostrarEditorHora(indice, elemento, horaActual, fechaInicioStr, estadoA
             generarGantt();
         }
         
+        // Actualizar estadísticas
+        actualizarEstadisticasTrabajos();
+        
         document.body.removeChild(editor);
     });
     
@@ -981,6 +1043,9 @@ function handleDrop(e) {
         if (document.getElementById('ganttTab').classList.contains('active')) {
             generarGantt();
         }
+        
+        // Actualizar estadísticas
+        actualizarEstadisticasTrabajos();
     }
 }
 
