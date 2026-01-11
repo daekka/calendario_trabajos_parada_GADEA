@@ -382,9 +382,9 @@ function generarCalendario() {
     
     if (!fechaInicioStr || !fechaFinStr) {
         // Valores por defecto si no hay fechas
-        const enero = generarMesCalendario(2026, 0, 16, 31);
+        const enero = generarMesCalendario(2026, 0, 16, 31, true, 0, false, false, true);
         calendarioContainer.appendChild(enero);
-        const febrero = generarMesCalendario(2026, 1, 1, 16);
+        const febrero = generarMesCalendario(2026, 1, 1, 16, false, 1, true, true, false);
         calendarioContainer.appendChild(febrero);
         return;
     }
@@ -426,9 +426,13 @@ function generarCalendario() {
         fechaActual = new Date(ano, mes + 1, 1);
     }
     
-    // Generar calendarios para cada mes
-    meses.forEach(({ ano, mes, diaInicio, diaFin }) => {
-        const mesCalendario = generarMesCalendario(ano, mes, diaInicio, diaFin);
+    // Generar calendarios para cada mes (continuo, sin saltos)
+    meses.forEach(({ ano, mes, diaInicio, diaFin }, index) => {
+        const esPrimerMes = index === 0;
+        const esUltimoMes = index === meses.length - 1;
+        const tieneMesAnterior = index > 0;
+        const tieneMesSiguiente = index < meses.length - 1;
+        const mesCalendario = generarMesCalendario(ano, mes, diaInicio, diaFin, esPrimerMes, index, esUltimoMes, tieneMesAnterior, tieneMesSiguiente);
         calendarioContainer.appendChild(mesCalendario);
     });
 }
@@ -444,32 +448,37 @@ function actualizarCalendario() {
 
 // Generar un mes del calendario
 // diaInicio y diaFin: rango de días a mostrar (null = todos los días del mes)
-function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
+// esPrimerMes: si es true, mostrar los días de la semana
+// indiceMes: índice del mes para alternar fondos (0, 1, 2, ...)
+// esUltimoMes: si es true, puede mostrar días de relleno del mes siguiente
+// tieneMesAnterior: si es true, hay un mes anterior en el rango (no añadir días del mes anterior)
+// tieneMesSiguiente: si es true, hay un mes siguiente en el rango (no añadir días del mes siguiente)
+function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrimerMes = true, indiceMes = 0, esUltimoMes = true, tieneMesAnterior = false, tieneMesSiguiente = false) {
     const contenedorMes = document.createElement('div');
     contenedorMes.className = 'mes-calendario';
     
-    // Nombre del mes
-    const nombresMeses = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
+    // Añadir clase para alternar fondos (par/impar)
+    if (indiceMes % 2 === 0) {
+        contenedorMes.classList.add('mes-par');
+    } else {
+        contenedorMes.classList.add('mes-impar');
+    }
     
-    const mesHeader = document.createElement('div');
-    mesHeader.className = 'mes-header';
-    mesHeader.textContent = `${nombresMeses[mes]} ${ano}`;
-    contenedorMes.appendChild(mesHeader);
+    // NO mostrar header del mes (eliminado para calendario continuo)
     
-    // Días de la semana (empezando en lunes)
-    const diasSemana = document.createElement('div');
-    diasSemana.className = 'dias-semana';
-    const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    nombresDias.forEach(dia => {
-        const diaSemana = document.createElement('div');
-        diaSemana.className = 'dia-semana';
-        diaSemana.textContent = dia;
-        diasSemana.appendChild(diaSemana);
-    });
-    contenedorMes.appendChild(diasSemana);
+    // Días de la semana (empezando en lunes) - solo mostrar en el primer mes
+    if (esPrimerMes) {
+        const diasSemana = document.createElement('div');
+        diasSemana.className = 'dias-semana';
+        const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        nombresDias.forEach(dia => {
+            const diaSemana = document.createElement('div');
+            diaSemana.className = 'dia-semana';
+            diaSemana.textContent = dia;
+            diasSemana.appendChild(diaSemana);
+        });
+        contenedorMes.appendChild(diasSemana);
+    }
     
     // Grid de días
     const diasMes = document.createElement('div');
@@ -485,41 +494,44 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
     const diaSemanaJS = primerDia.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
     const diaSemanaInicio = (diaSemanaJS + 6) % 7; // 0=lunes, 1=martes, ..., 6=domingo
     
-    // Días del mes anterior (relleno) - SOLO si empezamos desde el día 1 del mes
-    // Si el rango no empieza en el día 1, NO mostrar días del mes anterior
-    if (diaSemanaInicio > 0 && primerDiaAMostrar === 1) {
-        const ultimoDiaMesAnterior = new Date(ano, mes, 0);
-        const ultimoDiaNumero = ultimoDiaMesAnterior.getDate();
-        const diaSemanaUltimoJS = ultimoDiaMesAnterior.getDay();
-        const diaSemanaUltimo = (diaSemanaUltimoJS + 6) % 7; // Convertir a lunes=0
-        
-        // Calcular cuántos días del mes anterior necesitamos mostrar
-        const diasARellenar = diaSemanaInicio;
-        
-        for (let i = diasARellenar - 1; i >= 0; i--) {
-            const dia = document.createElement('div');
-            dia.className = 'dia-calendario otro-mes';
+    // Días del mes anterior (relleno) - NUNCA mostrar días del mes anterior si hay un mes anterior en el rango
+    // Si hay un mes anterior, ese mes ya generó sus días, así que solo mostrar celdas vacías
+    if (diaSemanaInicio > 0) {
+        if (!tieneMesAnterior && primerDiaAMostrar === 1) {
+            // Solo mostrar días del mes anterior si NO hay mes anterior en el rango Y empezamos desde el día 1
+            const ultimoDiaMesAnterior = new Date(ano, mes, 0);
+            const ultimoDiaNumero = ultimoDiaMesAnterior.getDate();
+            const diaSemanaUltimoJS = ultimoDiaMesAnterior.getDay();
+            const diaSemanaUltimo = (diaSemanaUltimoJS + 6) % 7; // Convertir a lunes=0
             
-            // Calcular qué día de la semana queremos mostrar (0=lunes, 1=martes, etc.)
-            const diaSemanaDeseado = diaSemanaInicio - 1 - i;
+            // Calcular cuántos días del mes anterior necesitamos mostrar
+            const diasARellenar = diaSemanaInicio;
             
-            // Calcular el día del mes anterior que corresponde a ese día de la semana
-            // Convertir de vuelta a formato JS (domingo=0) para el cálculo
-            const diaSemanaDeseadoJS = (diaSemanaDeseado + 1) % 7;
-            const diaSemanaUltimoJSOriginal = ultimoDiaMesAnterior.getDay();
-            const diferencia = (diaSemanaUltimoJSOriginal - diaSemanaDeseadoJS + 7) % 7;
-            const diaNumero = ultimoDiaNumero - diferencia;
-            
-            dia.textContent = diaNumero;
-            diasMes.appendChild(dia);
-        }
-    } else if (diaSemanaInicio > 0 && primerDiaAMostrar > 1) {
-        // Si no empezamos desde el día 1, mostrar celdas vacías en lugar de días del mes anterior
-        for (let i = 0; i < diaSemanaInicio; i++) {
-            const dia = document.createElement('div');
-            dia.className = 'dia-calendario otro-mes';
-            dia.textContent = ''; // Celda vacía
-            diasMes.appendChild(dia);
+            for (let i = diasARellenar - 1; i >= 0; i--) {
+                const dia = document.createElement('div');
+                dia.className = 'dia-calendario otro-mes';
+                
+                // Calcular qué día de la semana queremos mostrar (0=lunes, 1=martes, etc.)
+                const diaSemanaDeseado = diaSemanaInicio - 1 - i;
+                
+                // Calcular el día del mes anterior que corresponde a ese día de la semana
+                // Convertir de vuelta a formato JS (domingo=0) para el cálculo
+                const diaSemanaDeseadoJS = (diaSemanaDeseado + 1) % 7;
+                const diaSemanaUltimoJSOriginal = ultimoDiaMesAnterior.getDay();
+                const diferencia = (diaSemanaUltimoJSOriginal - diaSemanaDeseadoJS + 7) % 7;
+                const diaNumero = ultimoDiaNumero - diferencia;
+                
+                dia.textContent = diaNumero;
+                diasMes.appendChild(dia);
+            }
+        } else {
+            // Si hay mes anterior o no empezamos desde el día 1, mostrar celdas vacías
+            for (let i = 0; i < diaSemanaInicio; i++) {
+                const dia = document.createElement('div');
+                dia.className = 'dia-calendario otro-mes';
+                dia.textContent = ''; // Celda vacía
+                diasMes.appendChild(dia);
+            }
         }
     }
     
@@ -533,7 +545,8 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
         
         const numeroDia = document.createElement('div');
         numeroDia.className = 'numero-dia';
-        numeroDia.textContent = dia;
+        // Mostrar día/mes en formato "16/1"
+        numeroDia.textContent = `${dia}/${mes + 1}`;
         diaElement.appendChild(numeroDia);
         
         // Contenedor para trabajos del día
@@ -552,29 +565,32 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
         diasMes.appendChild(diaElement);
     }
     
-    // Días del mes siguiente (relleno) - SOLO si terminamos en el último día del mes
-    // Si el rango no termina en el último día, NO mostrar días del mes siguiente
+    // Días del mes siguiente (relleno) - NUNCA mostrar días del mes siguiente si hay un mes siguiente en el rango
+    // Si hay un mes siguiente, ese mes ya generará sus días, así que solo mostrar celdas vacías
     const ultimoDiaDelMes = new Date(ano, mes + 1, 0).getDate();
     const totalCeldas = diasMes.children.length;
     const semanasCompletas = Math.ceil(totalCeldas / 7);
     const celdasNecesarias = semanasCompletas * 7;
     const celdasRestantes = celdasNecesarias - totalCeldas;
     
-    if (ultimoDiaAMostrar === ultimoDiaDelMes && celdasRestantes > 0) {
-        // Solo mostrar días del mes siguiente si terminamos en el último día del mes
-        for (let dia = 1; dia <= celdasRestantes; dia++) {
-            const diaElement = document.createElement('div');
-            diaElement.className = 'dia-calendario otro-mes';
-            diaElement.textContent = dia;
-            diasMes.appendChild(diaElement);
-        }
-    } else if (celdasRestantes > 0) {
-        // Si no terminamos en el último día, mostrar celdas vacías
-        for (let dia = 1; dia <= celdasRestantes; dia++) {
-            const diaElement = document.createElement('div');
-            diaElement.className = 'dia-calendario otro-mes';
-            diaElement.textContent = ''; // Celda vacía
-            diasMes.appendChild(diaElement);
+    if (celdasRestantes > 0) {
+        // Solo mostrar días del mes siguiente si NO hay mes siguiente Y es el último mes Y terminamos en el último día
+        if (!tieneMesSiguiente && esUltimoMes && ultimoDiaAMostrar === ultimoDiaDelMes) {
+            // Solo en este caso, mostrar días del mes siguiente
+            for (let dia = 1; dia <= celdasRestantes; dia++) {
+                const diaElement = document.createElement('div');
+                diaElement.className = 'dia-calendario otro-mes';
+                diaElement.textContent = dia;
+                diasMes.appendChild(diaElement);
+            }
+        } else {
+            // En cualquier otro caso (hay mes siguiente o no terminamos en el último día), mostrar celdas vacías
+            for (let dia = 1; dia <= celdasRestantes; dia++) {
+                const diaElement = document.createElement('div');
+                diaElement.className = 'dia-calendario otro-mes';
+                diaElement.textContent = ''; // Celda vacía
+                diasMes.appendChild(diaElement);
+            }
         }
     }
     

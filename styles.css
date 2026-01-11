@@ -238,20 +238,49 @@ body {
 
 .calendario-section {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+    position: relative;
 }
 
 .calendario-container {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 0;
     min-width: fit-content;
 }
 
 .mes-calendario {
     min-width: 500px;
-    background: #f8f9fa;
-    border-radius: 8px;
     padding: 20px;
+}
+
+/* Fondos alternos para meses */
+.mes-calendario.mes-par {
+    background: #f8f9fa;
+}
+
+.mes-calendario.mes-impar {
+    background: #ffffff;
+}
+
+/* Quitar padding superior en meses que no son el primero para eliminar saltos */
+.mes-calendario:not(:first-child) {
+    padding-top: 0;
+}
+
+/* Ajustar padding del primer mes para que el calendario tenga padding general */
+.calendario-container {
+    padding: 0;
+}
+
+.mes-calendario:first-child {
+    padding-top: 20px;
+}
+
+
+.mes-calendario:last-child {
+    padding-bottom: 20px;
 }
 
 .mes-header {
@@ -260,6 +289,7 @@ body {
     color: #333;
     font-size: 1.8em;
     font-weight: 600;
+    display: none; /* Ocultar header del mes */
 }
 
 .dias-semana {
@@ -267,6 +297,12 @@ body {
     grid-template-columns: repeat(7, 1fr);
     gap: 5px;
     margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dia-semana {
