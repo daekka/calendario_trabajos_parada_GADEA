@@ -1,0 +1,409 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+}
+
+.upload-section {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.fecha-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: 15px;
+}
+
+.fecha-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.fecha-input {
+    padding: 6px 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.fecha-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.actualizar-btn {
+    padding: 6px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.actualizar-btn:hover {
+    background: #5568d3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.file-input-label {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.file-input-label:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.file-input-label input[type="file"] {
+    display: none;
+}
+
+.export-btn {
+    padding: 8px 16px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.export-btn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.export-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+}
+
+.trabajos-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+}
+
+.trabajos-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+.trabajos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 200px;
+}
+
+.trabajos-list.drop-zone {
+    border: 2px dashed transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.trabajos-list.drop-zone.drag-over {
+    border-color: #28a745;
+    background: #e8f5e9;
+}
+
+.trabajo-item {
+    background: white;
+    padding: 12px 15px;
+    border-radius: 6px;
+    border: 2px solid #e0e0e0;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.trabajo-item:hover {
+    border-color: #667eea;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.trabajo-item:active {
+    cursor: grabbing;
+}
+
+.trabajo-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.empty-message {
+    color: #999;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.calendario-section {
+    overflow-x: auto;
+}
+
+.calendario-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    min-width: fit-content;
+}
+
+.mes-calendario {
+    min-width: 500px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.mes-header {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.8em;
+    font-weight: 600;
+}
+
+.dias-semana {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.dia-semana {
+    text-align: center;
+    font-weight: 600;
+    color: #667eea;
+    padding: 8px;
+    font-size: 0.9em;
+}
+
+.dias-mes {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.dia-calendario {
+    min-height: 100px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.dia-calendario:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.dia-calendario.drag-over {
+    border-color: #28a745;
+    background: #e8f5e9;
+    border-width: 3px;
+}
+
+.dia-calendario.otro-mes {
+    background: #f5f5f5;
+    opacity: 0.5;
+}
+
+.numero-dia {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.trabajos-dia {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 5px;
+}
+
+.trabajo-en-calendario {
+    background: #667eea;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    cursor: grab;
+    transition: all 0.2s ease;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.trabajo-en-calendario:active {
+    cursor: grabbing;
+}
+
+.trabajo-en-calendario:hover {
+    background: #5568d3;
+    transform: scale(1.05);
+}
+
+.trabajo-texto {
+    font-size: 0.75em;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trabajo-hora {
+    font-size: 0.6em;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.editor-hora {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px;
+}
+
+.editor-hora-contenido {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+}
+
+.editor-hora-contenido h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.hora-input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.hora-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.editor-hora-botones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-guardar-hora,
+.btn-cancelar-hora {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-guardar-hora {
+    background: #28a745;
+    color: white;
+}
+
+.btn-guardar-hora:hover {
+    background: #218838;
+}
+
+.btn-cancelar-hora {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancelar-hora:hover {
+    background: #5a6268;
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .trabajos-section {
+        max-height: 300px;
+    }
+
+    .calendario-container {
+        flex-direction: column;
+    }
+}

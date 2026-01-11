@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Trabajos</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="upload-section">
+            <label for="fileInput" class="file-input-label">
+                <span>📁 Subir archivo Excel</span>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" />
+            </label>
+            <button id="exportBtn" class="export-btn" disabled>💾 Guardar Excel</button>
+            <div class="fecha-controls">
+                <label for="fechaInicio" class="fecha-label">Fecha inicio:</label>
+                <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-16" />
+                <label for="fechaFin" class="fecha-label">Fecha fin:</label>
+                <input type="date" id="fechaFin" class="fecha-input" value="2026-02-28" />
+                <button id="actualizarCalendarioBtn" class="actualizar-btn">Actualizar calendario</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="trabajos-section">
+                <h2>Trabajos</h2>
+                <div id="trabajosList" class="trabajos-list">
+                    <p class="empty-message">Carga un archivo Excel para comenzar</p>
+                </div>
+            </div>
+
+            <div class="calendario-section">
+                <div id="calendarioContainer" class="calendario-container">
+                    <!-- Los calendarios se generarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
