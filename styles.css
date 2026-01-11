@@ -288,15 +288,15 @@ body {
 }
 
 .estadistica-item.estado-solicitado .estadistica-valor {
-    color: #ff9800;
+    color: #667eea; /* Azul - mismo color que estado-solicitado en calendario */
 }
 
 .estadistica-item.estado-ejecutado .estadistica-valor {
-    color: #2196f3;
+    color: #28a745; /* Verde - mismo color que estado-ejecutado en calendario */
 }
 
 .estadistica-item.estado-cerrado .estadistica-valor {
-    color: #4caf50;
+    color: #6c757d; /* Gris - mismo color que estado-cerrado en calendario */
 }
 
 .estadistica-texto {
