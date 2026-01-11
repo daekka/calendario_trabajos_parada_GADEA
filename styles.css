@@ -190,6 +190,52 @@ body {
     font-style: italic;
 }
 
+.vista-section {
+    display: flex;
+    flex-direction: column;
+    overflow-x: auto;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s ease;
+    position: relative;
+    top: 2px;
+}
+
+.tab-button:hover {
+    color: #667eea;
+    background: #f0f4ff;
+}
+
+.tab-button.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 .calendario-section {
     overflow-x: auto;
 }
@@ -299,8 +345,33 @@ body {
 }
 
 .trabajo-en-calendario:hover {
-    background: #5568d3;
+    opacity: 0.9;
     transform: scale(1.05);
+}
+
+/* Estados del permiso - Colores */
+.trabajo-en-calendario.estado-solicitado {
+    background: #667eea; /* Azul - Estado por defecto */
+}
+
+.trabajo-en-calendario.estado-solicitado:hover {
+    background: #5568d3;
+}
+
+.trabajo-en-calendario.estado-ejecutado {
+    background: #28a745; /* Verde - Ejecutado */
+}
+
+.trabajo-en-calendario.estado-ejecutado:hover {
+    background: #218838;
+}
+
+.trabajo-en-calendario.estado-cerrado {
+    background: #6c757d; /* Gris - Cerrado */
+}
+
+.trabajo-en-calendario.estado-cerrado:hover {
+    background: #5a6268;
 }
 
 .trabajo-texto {
@@ -325,10 +396,13 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: center;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .editor-hora-contenido {
@@ -355,6 +429,19 @@ body {
 }
 
 .hora-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.editor-hora-contenido .fecha-input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.editor-hora-contenido .fecha-input:focus {
     outline: none;
     border-color: #667eea;
 }
@@ -392,6 +479,174 @@ body {
 
 .btn-cancelar-hora:hover {
     background: #5a6268;
+}
+
+/* Estilos para el gráfico Gantt */
+.gantt-section {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+}
+
+.gantt-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.gantt-header {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    width: 100%;
+    min-width: max-content;
+}
+
+.gantt-header-left {
+    width: 300px;
+    min-width: 300px;
+    padding: 10px;
+    font-weight: 600;
+    border-right: 2px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.gantt-header-right {
+    flex: 1;
+    display: flex;
+    overflow: visible;
+    min-width: 0;
+}
+
+.gantt-date-header {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    padding: 10px 5px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    border-right: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.gantt-row {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 50px;
+    align-items: center;
+}
+
+.gantt-row:hover {
+    background: #f8f9fa;
+}
+
+.gantt-row-label {
+    width: 300px;
+    min-width: 300px;
+    padding: 10px;
+    border-right: 2px solid #e0e0e0;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gantt-row-label-title {
+    font-weight: 600;
+    color: #333;
+}
+
+.gantt-row-label-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+.gantt-row-timeline {
+    flex: 1;
+    position: relative;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: max-content;
+}
+
+.gantt-bar {
+    position: absolute;
+    height: 30px;
+    background: #667eea;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 0 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    box-sizing: border-box;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.gantt-bar:hover {
+    opacity: 0.9;
+    transform: translateY(-50%) translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Estados del permiso en barras Gantt - Colores */
+.gantt-bar.estado-solicitado {
+    background: #667eea; /* Azul - Estado por defecto */
+}
+
+.gantt-bar.estado-solicitado:hover {
+    background: #5568d3;
+}
+
+.gantt-bar.estado-ejecutado {
+    background: #28a745; /* Verde - Ejecutado */
+}
+
+.gantt-bar.estado-ejecutado:hover {
+    background: #218838;
+}
+
+.gantt-bar.estado-cerrado {
+    background: #6c757d; /* Gris - Cerrado */
+}
+
+.gantt-bar.estado-cerrado:hover {
+    background: #5a6268;
+}
+
+.gantt-timeline-cell {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    height: 50px;
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.gantt-timeline-cell.today {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.gantt-timeline-cell.weekend {
+    background: #f5f5f5;
 }
 
 @media (max-width: 1200px) {

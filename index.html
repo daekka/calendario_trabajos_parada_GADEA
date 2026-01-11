@@ -32,9 +32,26 @@
                 </div>
             </div>
 
-            <div class="calendario-section">
-                <div id="calendarioContainer" class="calendario-container">
-                    <!-- Los calendarios se generarán dinámicamente -->
+            <div class="vista-section">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="calendario">📅 Calendario</button>
+                    <button class="tab-button" data-tab="gantt">📊 Gantt</button>
+                </div>
+                
+                <div class="tab-content active" id="calendarioTab">
+                    <div class="calendario-section">
+                        <div id="calendarioContainer" class="calendario-container">
+                            <!-- Los calendarios se generarán dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="ganttTab">
+                    <div class="gantt-section">
+                        <div id="ganttContainer" class="gantt-container">
+                            <p class="empty-message">Carga un archivo Excel para ver el gráfico Gantt</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

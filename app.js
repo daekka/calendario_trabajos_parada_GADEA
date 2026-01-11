@@ -5,6 +5,8 @@ let trabajosAsignados = new Set(); // Set de índices de trabajos que han sido a
 let trabajosModificados = new Set(); // Set de índices de trabajos cuya fecha ha sido modificada
 let valoresOriginalesValidoDe = new Map(); // Map: índice -> valor original de "Válido de"
 let horasTrabajos = new Map(); // Map: índice -> hora (string) para almacenar horas modificadas
+let fechasFinTrabajos = new Map(); // Map: índice -> fecha fin (string) para almacenar fechas de finalización modificadas
+let estadosPermisos = new Map(); // Map: índice -> estado (string) para almacenar estados de permisos: 'SOLICITADO', 'EJECUTADO', 'CERRADO'
 
 // Nombres de columnas esperadas
 const COLUMNAS_ESPERADAS = [
@@ -22,6 +24,7 @@ const calendarioContainer = document.getElementById('calendarioContainer');
 const fechaInicio = document.getElementById('fechaInicio');
 const fechaFin = document.getElementById('fechaFin');
 const actualizarCalendarioBtn = document.getElementById('actualizarCalendarioBtn');
+const ganttContainer = document.getElementById('ganttContainer');
 
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
@@ -29,6 +32,26 @@ exportBtn.addEventListener('click', exportarExcel);
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
 }
+
+// Manejar cambio de pestañas
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+        
+        // Remover clase active de todos los botones y contenidos
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Añadir clase active al botón y contenido seleccionado
+        button.classList.add('active');
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+        
+        // Si se cambia a la pestaña Gantt, generar el gráfico
+        if (tabName === 'gantt') {
+            generarGantt();
+        }
+    });
+});
 
 // Función para manejar la carga del archivo Excel
 function handleFileUpload(event) {
@@ -69,6 +92,11 @@ function handleFileUpload(event) {
             mostrarTrabajos();
             generarCalendario();
             
+            // Actualizar Gantt si está visible
+            if (document.getElementById('ganttTab').classList.contains('active')) {
+                generarGantt();
+            }
+            
             // Habilitar botón de exportar
             exportBtn.disabled = false;
             
@@ -98,6 +126,8 @@ function procesarDatos(jsonData) {
     trabajosModificados.clear();
     valoresOriginalesValidoDe.clear();
     horasTrabajos.clear();
+    fechasFinTrabajos.clear();
+    estadosPermisos.clear();
     
     const headers = jsonData[0];
     
@@ -107,6 +137,9 @@ function procesarDatos(jsonData) {
     );
     const indiceActualizadaFecha = headers.findIndex(h => 
         h && (h.toString().trim() === 'Actualizada fecha' || h.toString().trim() === 'Actualizada Fecha')
+    );
+    const indiceEstadoPermiso = headers.findIndex(h => 
+        h && h.toString().trim() === 'Estado permiso'
     );
     
     // Procesar cada fila (empezando desde la fila 1, ya que 0 son los headers)
@@ -129,6 +162,14 @@ function procesarDatos(jsonData) {
         // Guardar valor original de "Válido de"
         const valorValidoDe = indiceValidoDe !== -1 ? (row[indiceValidoDe] || '') : '';
         valoresOriginalesValidoDe.set(trabajo._indice, valorValidoDe);
+        
+        // Cargar estado del permiso si existe en el Excel
+        if (indiceEstadoPermiso !== -1 && row[indiceEstadoPermiso]) {
+            const estadoPermiso = String(row[indiceEstadoPermiso] || '').trim().toUpperCase();
+            if (estadoPermiso === 'SOLICITADO' || estadoPermiso === 'EJECUTADO' || estadoPermiso === 'CERRADO') {
+                estadosPermisos.set(trabajo._indice, estadoPermiso);
+            }
+        }
         
         // Verificar si el trabajo fue actualizado (campo "Actualizada fecha")
         const actualizadaFecha = indiceActualizadaFecha !== -1 ? 
@@ -324,6 +365,11 @@ function handleDropListado(e) {
     
     // Actualizar listado para mostrar el trabajo nuevamente
     mostrarTrabajos();
+    
+    // Actualizar Gantt si está visible
+    if (document.getElementById('ganttTab').classList.contains('active')) {
+        generarGantt();
+    }
 }
 
 // Generar calendarios basado en las fechas seleccionadas
@@ -390,6 +436,10 @@ function generarCalendario() {
 // Actualizar calendario cuando cambien las fechas
 function actualizarCalendario() {
     generarCalendario();
+    // Actualizar Gantt si está visible
+    if (document.getElementById('ganttTab').classList.contains('active')) {
+        generarGantt();
+    }
 }
 
 // Generar un mes del calendario
@@ -618,10 +668,15 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         trabajoElement.addEventListener('dragstart', handleDragStartCalendario);
         trabajoElement.addEventListener('dragend', handleDragEnd);
         
-        // Evento de clic derecho para editar hora
+        // Aplicar color según el estado del permiso
+        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+        trabajoElement.dataset.estado = estadoPermiso;
+        trabajoElement.classList.add(`estado-${estadoPermiso.toLowerCase()}`);
+        
+        // Evento de clic derecho para editar hora, fecha de finalización y estado del permiso
         trabajoElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            mostrarEditorHora(indice, trabajoElement, hora);
+            mostrarEditorHora(indice, trabajoElement, hora, fechaStr, estadoPermiso);
         });
         
         contenedor.appendChild(trabajoElement);
@@ -629,14 +684,49 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
 }
 
 // Mostrar editor de hora
-function mostrarEditorHora(indice, elemento, horaActual) {
-    // Crear modal/editor de hora
+function mostrarEditorHora(indice, elemento, horaActual, fechaInicioStr, estadoActual = 'SOLICITADO') {
+    // Obtener fecha de finalización actual o calcular por defecto (día siguiente)
+    const trabajo = trabajos[indice];
+    let fechaFinActual = '';
+    
+    if (fechasFinTrabajos.has(indice)) {
+        fechaFinActual = fechasFinTrabajos.get(indice);
+    } else if (trabajo['Validez a']) {
+        fechaFinActual = normalizarFecha(trabajo['Validez a']);
+    }
+    
+    // Si no hay fecha de finalización, calcular el día siguiente de la fecha de inicio
+    if (!fechaFinActual && fechaInicioStr) {
+        const fechaInicio = new Date(fechaInicioStr);
+        fechaInicio.setDate(fechaInicio.getDate() + 1);
+        const ano = fechaInicio.getFullYear();
+        const mes = String(fechaInicio.getMonth() + 1).padStart(2, '0');
+        const dia = String(fechaInicio.getDate()).padStart(2, '0');
+        fechaFinActual = `${ano}-${mes}-${dia}`;
+    }
+    
+    // Crear modal/editor de hora, fecha de finalización y estado del permiso
     const editor = document.createElement('div');
     editor.className = 'editor-hora';
     editor.innerHTML = `
         <div class="editor-hora-contenido">
-            <h3>Editar hora de inicio</h3>
-            <input type="time" id="horaInput" value="${horaActual}" class="hora-input" />
+            <h3>Editar trabajo</h3>
+            <div style="margin-bottom: 15px;">
+                <label for="horaInput" style="display: block; margin-bottom: 5px; font-weight: 600;">Hora de inicio:</label>
+                <input type="time" id="horaInput" value="${horaActual}" class="hora-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="fechaFinInput" style="display: block; margin-bottom: 5px; font-weight: 600;">Validez a:</label>
+                <input type="date" id="fechaFinInput" value="${fechaFinActual}" class="fecha-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="estadoPermisoInput" style="display: block; margin-bottom: 5px; font-weight: 600;">Estado del permiso:</label>
+                <select id="estadoPermisoInput" class="estado-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                    <option value="SOLICITADO" ${estadoActual === 'SOLICITADO' ? 'selected' : ''}>SOLICITADO</option>
+                    <option value="EJECUTADO" ${estadoActual === 'EJECUTADO' ? 'selected' : ''}>EJECUTADO</option>
+                    <option value="CERRADO" ${estadoActual === 'CERRADO' ? 'selected' : ''}>CERRADO</option>
+                </select>
+            </div>
             <div class="editor-hora-botones">
                 <button class="btn-guardar-hora">Guardar</button>
                 <button class="btn-cancelar-hora">Cancelar</button>
@@ -647,18 +737,25 @@ function mostrarEditorHora(indice, elemento, horaActual) {
     document.body.appendChild(editor);
     
     const horaInput = editor.querySelector('#horaInput');
+    const fechaFinInput = editor.querySelector('#fechaFinInput');
+    const estadoPermisoInput = editor.querySelector('#estadoPermisoInput');
     const btnGuardar = editor.querySelector('.btn-guardar-hora');
     const btnCancelar = editor.querySelector('.btn-cancelar-hora');
     
-    // Posicionar el editor cerca del elemento
-    const rect = elemento.getBoundingClientRect();
-    editor.style.top = `${rect.bottom + 5}px`;
-    editor.style.left = `${rect.left}px`;
-    
-    // Guardar hora
+    // Guardar hora, fecha de finalización y estado del permiso
     btnGuardar.addEventListener('click', () => {
         const nuevaHora = normalizarHora(horaInput.value);
         horasTrabajos.set(indice, nuevaHora);
+        
+        // Guardar fecha de finalización si se ha modificado
+        const nuevaFechaFin = fechaFinInput.value;
+        if (nuevaFechaFin) {
+            fechasFinTrabajos.set(indice, nuevaFechaFin);
+        }
+        
+        // Guardar estado del permiso
+        const nuevoEstado = estadoPermisoInput.value;
+        estadosPermisos.set(indice, nuevoEstado);
         
         // Actualizar visualización
         const fechaOrigen = elemento.dataset.fechaOrigen;
@@ -667,6 +764,11 @@ function mostrarEditorHora(indice, elemento, horaActual) {
             if (contenedor) {
                 mostrarTrabajosEnDia(contenedor, fechaOrigen);
             }
+        }
+        
+        // Actualizar Gantt si está visible
+        if (document.getElementById('ganttTab').classList.contains('active')) {
+            generarGantt();
         }
         
         document.body.removeChild(editor);
@@ -684,7 +786,7 @@ function mostrarEditorHora(indice, elemento, horaActual) {
         }
     });
     
-    // Enfocar el input
+    // Enfocar el input de hora
     horaInput.focus();
 }
 
@@ -815,6 +917,11 @@ function handleDrop(e) {
         if (!fechaOrigen) {
             mostrarTrabajos();
         }
+        
+        // Actualizar Gantt si está visible
+        if (document.getElementById('ganttTab').classList.contains('active')) {
+            generarGantt();
+        }
     }
 }
 
@@ -852,9 +959,10 @@ function exportarExcel() {
         // Crear array de datos para exportar
         const datosExportar = [];
         
-        // Añadir encabezados (columnas originales + nueva columna)
+        // Añadir encabezados (columnas originales + nuevas columnas)
         const headers = COLUMNAS_ESPERADAS.slice();
         headers.push('Actualizada fecha');
+        headers.push('Estado permiso');
         datosExportar.push(headers);
         
         // Procesar cada trabajo
@@ -880,12 +988,23 @@ function exportarExcel() {
                     }
                 }
                 
+                // Si es la columna "Validez a", usar la fecha modificada si existe
+                if (columna === 'Validez a') {
+                    if (fechasFinTrabajos.has(indice)) {
+                        valor = fechasFinTrabajos.get(indice);
+                    }
+                }
+                
                 fila.push(valor);
             });
             
             // Añadir campo "Actualizada fecha" (Sí/No)
             const actualizadaFecha = trabajosModificados.has(indice) ? 'Sí' : 'No';
             fila.push(actualizadaFecha);
+            
+            // Añadir campo "Estado permiso"
+            const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+            fila.push(estadoPermiso);
             
             datosExportar.push(fila);
         });
@@ -897,6 +1016,7 @@ function exportarExcel() {
         // Ajustar ancho de columnas
         const colWidths = COLUMNAS_ESPERADAS.map(() => ({ wch: 15 }));
         colWidths.push({ wch: 15 }); // Para la columna "Actualizada fecha"
+        colWidths.push({ wch: 15 }); // Para la columna "Estado permiso"
         ws['!cols'] = colWidths;
         
         XLSX.utils.book_append_sheet(wb, ws, 'Trabajos con Fechas');
@@ -915,4 +1035,222 @@ function exportarExcel() {
         console.error('Error al exportar:', error);
         alert('Error al exportar el archivo: ' + error.message);
     }
+}
+
+// Generar gráfico Gantt
+function generarGantt() {
+    if (trabajos.length === 0) {
+        ganttContainer.innerHTML = '<p class="empty-message">Carga un archivo Excel para ver el gráfico Gantt</p>';
+        return;
+    }
+    
+    // Obtener todos los trabajos asignados con sus fechas
+    const trabajosConFechasGantt = [];
+    
+    for (const [fechaStr, indices] of trabajosConFechas.entries()) {
+        indices.forEach(indice => {
+            const trabajo = trabajos[indice];
+            const fechaInicioTrabajo = normalizarFecha(fechaStr);
+            
+            // Obtener fecha de finalización
+            let fechaFinTrabajo = null;
+            if (fechasFinTrabajos.has(indice)) {
+                fechaFinTrabajo = fechasFinTrabajos.get(indice);
+            } else if (trabajo['Validez a']) {
+                fechaFinTrabajo = normalizarFecha(trabajo['Validez a']);
+            }
+            
+            // Si no hay fecha de fin, usar el día siguiente de inicio
+            if (!fechaFinTrabajo && fechaInicioTrabajo) {
+                const fechaInicioDate = new Date(fechaInicioTrabajo);
+                fechaInicioDate.setDate(fechaInicioDate.getDate() + 1);
+                const ano = fechaInicioDate.getFullYear();
+                const mes = String(fechaInicioDate.getMonth() + 1).padStart(2, '0');
+                const dia = String(fechaInicioDate.getDate()).padStart(2, '0');
+                fechaFinTrabajo = `${ano}-${mes}-${dia}`;
+            }
+            
+            if (fechaInicioTrabajo) {
+                trabajosConFechasGantt.push({
+                    indice,
+                    trabajo,
+                    fechaInicio: fechaInicioTrabajo,
+                    fechaFin: fechaFinTrabajo || fechaInicioTrabajo,
+                    hora: obtenerHoraTrabajo(indice)
+                });
+            }
+        });
+    }
+    
+    if (trabajosConFechasGantt.length === 0) {
+        ganttContainer.innerHTML = '<p class="empty-message">No hay trabajos asignados a fechas para mostrar en el Gantt</p>';
+        return;
+    }
+    
+    // Ordenar por fecha de inicio
+    trabajosConFechasGantt.sort((a, b) => {
+        const fechaA = new Date(a.fechaInicio);
+        const fechaB = new Date(b.fechaInicio);
+        return fechaA - fechaB;
+    });
+    
+    // Calcular rango de fechas para el gráfico
+    const fechasInicio = trabajosConFechasGantt.map(t => new Date(t.fechaInicio));
+    const fechasFin = trabajosConFechasGantt.map(t => new Date(t.fechaFin));
+    const fechaMin = new Date(Math.min(...fechasInicio));
+    const fechaMax = new Date(Math.max(...fechasFin));
+    
+    // Ajustar al rango de fechas seleccionado si existe
+    const fechaInicioStr = fechaInicio.value;
+    const fechaFinStr = fechaFin.value;
+    if (fechaInicioStr && fechaFinStr) {
+        const inicioSeleccionado = new Date(fechaInicioStr);
+        const finSeleccionado = new Date(fechaFinStr);
+        if (inicioSeleccionado < fechaMin) fechaMin.setTime(inicioSeleccionado.getTime());
+        if (finSeleccionado > fechaMax) fechaMax.setTime(finSeleccionado.getTime());
+    }
+    
+    // Generar array de fechas para el timeline
+    const fechasTimeline = [];
+    const fechaActual = new Date(fechaMin);
+    while (fechaActual <= fechaMax) {
+        fechasTimeline.push(new Date(fechaActual));
+        fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+    
+    // Crear HTML del Gantt
+    let html = '<div class="gantt-header">';
+    html += '<div class="gantt-header-left">Trabajo</div>';
+    html += '<div class="gantt-header-right">';
+    
+    fechasTimeline.forEach(fecha => {
+        const esFinDeSemana = fecha.getDay() === 0 || fecha.getDay() === 6;
+        const esHoy = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()) === 
+                     formatearFecha(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        let clase = '';
+        if (esHoy) clase = 'today';
+        else if (esFinDeSemana) clase = 'weekend';
+        
+        const diaSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][fecha.getDay()];
+        html += `<div class="gantt-date-header ${clase}">${diaSemana}<br>${fecha.getDate()}/${fecha.getMonth() + 1}</div>`;
+    });
+    
+    html += '</div></div>';
+    
+    // Crear filas de trabajos
+    trabajosConFechasGantt.forEach(({ indice, trabajo, fechaInicio: fechaIni, fechaFin: fechaF, hora }) => {
+        // Normalizar fechas para comparación
+        const fechaIniStr = fechaIni.split('T')[0];
+        const fechaFinStr = fechaF.split('T')[0];
+        
+        // Encontrar el índice de la fecha de inicio y fin en el timeline
+        let indiceInicio = -1;
+        let indiceFin = -1;
+        
+        fechasTimeline.forEach((fecha, index) => {
+            const fechaStr = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+            if (fechaStr === fechaIniStr && indiceInicio === -1) {
+                indiceInicio = index;
+            }
+            if (fechaStr === fechaFinStr) {
+                indiceFin = index;
+            }
+        });
+        
+        // Si no encontramos la fecha exacta, buscar la más cercana
+        if (indiceInicio === -1) {
+            for (let i = 0; i < fechasTimeline.length; i++) {
+                const fechaStr = formatearFecha(fechasTimeline[i].getFullYear(), fechasTimeline[i].getMonth(), fechasTimeline[i].getDate());
+                if (fechaStr >= fechaIniStr) {
+                    indiceInicio = i;
+                    break;
+                }
+            }
+            if (indiceInicio === -1) indiceInicio = 0;
+        }
+        
+        if (indiceFin === -1) {
+            for (let i = fechasTimeline.length - 1; i >= 0; i--) {
+                const fechaStr = formatearFecha(fechasTimeline[i].getFullYear(), fechasTimeline[i].getMonth(), fechasTimeline[i].getDate());
+                if (fechaStr <= fechaFinStr) {
+                    indiceFin = i;
+                    break;
+                }
+            }
+            if (indiceFin === -1) indiceFin = fechasTimeline.length - 1;
+        }
+        
+        // Calcular duración en días (incluyendo el día de inicio y fin)
+        const duracion = indiceFin - indiceInicio + 1;
+        
+        // Calcular posición y ancho basado en el ancho fijo de cada celda (60px)
+        const anchoCelda = 60;
+        const posicionPx = indiceInicio * anchoCelda;
+        const anchoPx = duracion * anchoCelda;
+        const anchoTotalTimeline = fechasTimeline.length * anchoCelda;
+        
+        const posicionPorcentaje = (posicionPx / anchoTotalTimeline) * 100;
+        const anchoPorcentaje = (anchoPx / anchoTotalTimeline) * 100;
+        
+        // Obtener texto breve
+        let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
+        textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
+        
+        // Obtener estado del permiso
+        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+        const claseEstado = `estado-${estadoPermiso.toLowerCase()}`;
+        
+        html += '<div class="gantt-row">';
+        html += '<div class="gantt-row-label">';
+        html += `<div class="gantt-row-label-title">${textoBreve}</div>`;
+        html += `<div class="gantt-row-label-meta">${fechaIni} - ${fechaF} | ${hora} | ${estadoPermiso}</div>`;
+        html += '</div>';
+        html += '<div class="gantt-row-timeline">';
+        
+        // Añadir celdas del timeline
+        fechasTimeline.forEach(fecha => {
+            const esFinDeSemana = fecha.getDay() === 0 || fecha.getDay() === 6;
+            const esHoy = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()) === 
+                         formatearFecha(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+            let clase = '';
+            if (esHoy) clase = 'today';
+            else if (esFinDeSemana) clase = 'weekend';
+            html += `<div class="gantt-timeline-cell ${clase}"></div>`;
+        });
+        
+        // Añadir barra del trabajo usando píxeles para mayor precisión con clase de estado
+        html += `<div class="gantt-bar ${claseEstado}" style="left: ${posicionPx}px; width: ${anchoPx}px;" title="${textoBreve} - ${fechaIni} a ${fechaF} - ${estadoPermiso}">${textoBreve.substring(0, 20)}${textoBreve.length > 20 ? '...' : ''}</div>`;
+        
+        html += '</div></div>';
+    });
+    
+    ganttContainer.innerHTML = html;
+    
+    // Sincronizar el scroll del header con el contenido y asegurar mismo ancho
+    setTimeout(() => {
+        const ganttSection = ganttContainer.closest('.gantt-section');
+        const headerRight = ganttContainer.querySelector('.gantt-header-right');
+        const rowsTimeline = ganttContainer.querySelectorAll('.gantt-row-timeline');
+        
+        if (ganttSection && headerRight && rowsTimeline.length > 0) {
+            // Calcular el ancho total del timeline (número de días * 60px)
+            const anchoTotalTimeline = fechasTimeline.length * 60;
+            
+            // Asegurar que el header y las filas tengan el mismo ancho
+            headerRight.style.width = `${anchoTotalTimeline}px`;
+            headerRight.style.minWidth = `${anchoTotalTimeline}px`;
+            headerRight.style.flexShrink = '0';
+            
+            rowsTimeline.forEach(rowTimeline => {
+                rowTimeline.style.width = `${anchoTotalTimeline}px`;
+                rowTimeline.style.minWidth = `${anchoTotalTimeline}px`;
+                rowTimeline.style.flexShrink = '0';
+            });
+            
+            // Sincronizar scroll horizontal del header con el contenedor
+            ganttSection.addEventListener('scroll', () => {
+                headerRight.scrollLeft = ganttSection.scrollLeft;
+            });
+        }
+    }, 0);
 }
