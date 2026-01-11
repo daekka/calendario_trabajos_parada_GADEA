@@ -485,8 +485,9 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
     const diaSemanaJS = primerDia.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
     const diaSemanaInicio = (diaSemanaJS + 6) % 7; // 0=lunes, 1=martes, ..., 6=domingo
     
-    // Días del mes anterior (relleno) - solo si no empezamos desde el lunes
-    if (diaSemanaInicio > 0) {
+    // Días del mes anterior (relleno) - SOLO si empezamos desde el día 1 del mes
+    // Si el rango no empieza en el día 1, NO mostrar días del mes anterior
+    if (diaSemanaInicio > 0 && primerDiaAMostrar === 1) {
         const ultimoDiaMesAnterior = new Date(ano, mes, 0);
         const ultimoDiaNumero = ultimoDiaMesAnterior.getDate();
         const diaSemanaUltimoJS = ultimoDiaMesAnterior.getDay();
@@ -510,6 +511,14 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
             const diaNumero = ultimoDiaNumero - diferencia;
             
             dia.textContent = diaNumero;
+            diasMes.appendChild(dia);
+        }
+    } else if (diaSemanaInicio > 0 && primerDiaAMostrar > 1) {
+        // Si no empezamos desde el día 1, mostrar celdas vacías en lugar de días del mes anterior
+        for (let i = 0; i < diaSemanaInicio; i++) {
+            const dia = document.createElement('div');
+            dia.className = 'dia-calendario otro-mes';
+            dia.textContent = ''; // Celda vacía
             diasMes.appendChild(dia);
         }
     }
@@ -543,17 +552,30 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null) {
         diasMes.appendChild(diaElement);
     }
     
-    // Días del mes siguiente (relleno hasta completar semanas completas)
+    // Días del mes siguiente (relleno) - SOLO si terminamos en el último día del mes
+    // Si el rango no termina en el último día, NO mostrar días del mes siguiente
+    const ultimoDiaDelMes = new Date(ano, mes + 1, 0).getDate();
     const totalCeldas = diasMes.children.length;
     const semanasCompletas = Math.ceil(totalCeldas / 7);
     const celdasNecesarias = semanasCompletas * 7;
     const celdasRestantes = celdasNecesarias - totalCeldas;
     
-    for (let dia = 1; dia <= celdasRestantes; dia++) {
-        const diaElement = document.createElement('div');
-        diaElement.className = 'dia-calendario otro-mes';
-        diaElement.textContent = dia;
-        diasMes.appendChild(diaElement);
+    if (ultimoDiaAMostrar === ultimoDiaDelMes && celdasRestantes > 0) {
+        // Solo mostrar días del mes siguiente si terminamos en el último día del mes
+        for (let dia = 1; dia <= celdasRestantes; dia++) {
+            const diaElement = document.createElement('div');
+            diaElement.className = 'dia-calendario otro-mes';
+            diaElement.textContent = dia;
+            diasMes.appendChild(diaElement);
+        }
+    } else if (celdasRestantes > 0) {
+        // Si no terminamos en el último día, mostrar celdas vacías
+        for (let dia = 1; dia <= celdasRestantes; dia++) {
+            const diaElement = document.createElement('div');
+            diaElement.className = 'dia-calendario otro-mes';
+            diaElement.textContent = ''; // Celda vacía
+            diasMes.appendChild(diaElement);
+        }
     }
     
     contenedorMes.appendChild(diasMes);
