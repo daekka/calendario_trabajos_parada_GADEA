@@ -209,13 +209,16 @@ body {
     display: flex;
     flex-direction: column;
     overflow-x: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     border-bottom: 2px solid #e0e0e0;
+    flex-shrink: 0;
 }
 
 .tab-button {
@@ -248,13 +251,18 @@ body {
 }
 
 .tab-content.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .calendario-section {
     overflow-x: auto;
     overflow-y: auto;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     position: relative;
 }
 
@@ -263,6 +271,7 @@ body {
     flex-direction: column;
     gap: 0;
     min-width: fit-content;
+    position: relative;
 }
 
 .mes-calendario {
@@ -290,7 +299,11 @@ body {
 }
 
 .mes-calendario:first-child {
-    padding-top: 15px;
+    padding-top: 0;
+}
+
+.mes-calendario:first-child .dias-semana {
+    margin-top: 15px;
 }
 
 .mes-calendario:last-child {
@@ -311,12 +324,19 @@ body {
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
     margin-bottom: 8px;
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
-    z-index: 10;
-    background: #ffffff;
+    z-index: 100;
+    background: #ffffff !important;
     padding: 8px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-top: 0;
+    width: calc(100% + 30px);
 }
 
 .dia-semana {
@@ -378,7 +398,7 @@ body {
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75em;
+    font-size: 0.99em;
     cursor: grab;
     transition: all 0.2s ease;
     word-wrap: break-word;
@@ -432,7 +452,27 @@ body {
     white-space: nowrap;
 }
 
+.trabajo-primera-linea {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .trabajo-hora {
+    font-size: 0.6em;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.trabajo-orden {
+    font-size: 0.6em;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.trabajo-solicitud {
     font-size: 0.6em;
     opacity: 0.9;
     font-weight: 600;

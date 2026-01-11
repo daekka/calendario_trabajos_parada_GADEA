@@ -690,17 +690,37 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
         textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
         
-        // Crear contenedor para el texto y la hora
+        // Obtener Orden y Solicitud
+        const orden = trabajo['Orden'] || '';
+        const solicitud = trabajo['Solicitud'] || '';
+        
+        // Crear contenedor para la primera línea (hora, Orden, Solicitud)
+        const primeraLinea = document.createElement('div');
+        primeraLinea.className = 'trabajo-primera-linea';
+        
+        const horaContainer = document.createElement('div');
+        horaContainer.className = 'trabajo-hora';
+        horaContainer.textContent = `⏰ ${hora}`;
+        
+        const ordenContainer = document.createElement('div');
+        ordenContainer.className = 'trabajo-orden';
+        ordenContainer.textContent = `📋 ${orden}`;
+        
+        const solicitudContainer = document.createElement('div');
+        solicitudContainer.className = 'trabajo-solicitud';
+        solicitudContainer.textContent = `📄 ${solicitud}`;
+        
+        primeraLinea.appendChild(horaContainer);
+        primeraLinea.appendChild(ordenContainer);
+        primeraLinea.appendChild(solicitudContainer);
+        
+        // Crear contenedor para el texto (segunda línea)
         const textoContainer = document.createElement('div');
         textoContainer.className = 'trabajo-texto';
         textoContainer.textContent = textoBreve;
         
-        const horaContainer = document.createElement('div');
-        horaContainer.className = 'trabajo-hora';
-        horaContainer.textContent = hora;
-        
+        trabajoElement.appendChild(primeraLinea);
         trabajoElement.appendChild(textoContainer);
-        trabajoElement.appendChild(horaContainer);
         trabajoElement.title = `${textoBreve} - ${hora}`;
         
         // Eventos de drag para trabajos en el calendario
