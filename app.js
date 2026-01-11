@@ -545,8 +545,9 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
         
         const numeroDia = document.createElement('div');
         numeroDia.className = 'numero-dia';
-        // Mostrar día/mes en formato "16/1"
-        numeroDia.textContent = `${dia}/${mes + 1}`;
+        // Mostrar día/mes en formato "16/Ene" (mes en texto)
+        const nombresMesesAbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        numeroDia.textContent = `${dia}/${nombresMesesAbrev[mes]}`;
         diaElement.appendChild(numeroDia);
         
         // Contenedor para trabajos del día

@@ -8,25 +8,31 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px;
+    margin: 0;
 }
 
 .container {
-    max-width: 1800px;
+    max-width: 100%;
+    width: 100%;
     margin: 0 auto;
     background: white;
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    padding: 20px;
+    padding: 15px;
+    height: calc(100vh - 20px);
+    display: flex;
+    flex-direction: column;
 }
 
 .upload-section {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .fecha-controls {
@@ -122,29 +128,37 @@ body {
 
 .main-content {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 30px;
+    grid-template-columns: 250px 1fr;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .trabajos-section {
     background: #f8f9fa;
     border-radius: 8px;
-    padding: 20px;
-    max-height: calc(100vh - 250px);
+    padding: 15px;
     overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .trabajos-section h2 {
     color: #333;
-    margin-bottom: 15px;
-    font-size: 1.5em;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+    flex-shrink: 0;
 }
 
 .trabajos-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     min-height: 200px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .trabajos-list.drop-zone {
@@ -160,12 +174,13 @@ body {
 
 .trabajo-item {
     background: white;
-    padding: 12px 15px;
+    padding: 10px 12px;
     border-radius: 6px;
     border: 2px solid #e0e0e0;
     cursor: grab;
     transition: all 0.2s ease;
     user-select: none;
+    font-size: 0.9em;
 }
 
 .trabajo-item:hover {
@@ -239,7 +254,7 @@ body {
 .calendario-section {
     overflow-x: auto;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
+    height: 100%;
     position: relative;
 }
 
@@ -251,8 +266,8 @@ body {
 }
 
 .mes-calendario {
-    min-width: 500px;
-    padding: 20px;
+    min-width: 100%;
+    padding: 15px;
 }
 
 /* Fondos alternos para meses */
@@ -275,12 +290,11 @@ body {
 }
 
 .mes-calendario:first-child {
-    padding-top: 20px;
+    padding-top: 15px;
 }
 
-
 .mes-calendario:last-child {
-    padding-bottom: 20px;
+    padding-bottom: 15px;
 }
 
 .mes-header {
@@ -295,13 +309,13 @@ body {
 .dias-semana {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
+    gap: 4px;
+    margin-bottom: 8px;
     position: sticky;
     top: 0;
     z-index: 10;
     background: #ffffff;
-    padding: 10px 0;
+    padding: 8px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -316,15 +330,15 @@ body {
 .dias-mes {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 4px;
 }
 
 .dia-calendario {
-    min-height: 100px;
+    min-height: 120px;
     background: white;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
-    padding: 8px;
+    padding: 6px;
     position: relative;
     transition: all 0.2s ease;
 }
