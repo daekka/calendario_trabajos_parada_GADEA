@@ -98,6 +98,66 @@ body {
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Multi-select Dropdown Styles */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    background-color: white;
+    padding: 6px 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    min-width: 150px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-toggle:after {
+    content: '\25BC';
+    font-size: 10px;
+    margin-left: 10px;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    z-index: 1000;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 5px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 8px 12px;
+    display: block;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+
 .file-input-label input[type="file"] {
     display: none;
 }
@@ -288,15 +348,11 @@ body {
 }
 
 .estadistica-item.estado-solicitado .estadistica-valor {
-    color: #667eea; /* Azul - mismo color que estado-solicitado en calendario */
+    color: #9FA8DA; /* Azul suave - Solicitado */
 }
 
-.estadistica-item.estado-ejecutado .estadistica-valor {
-    color: #28a745; /* Verde - mismo color que estado-ejecutado en calendario */
-}
-
-.estadistica-item.estado-cerrado .estadistica-valor {
-    color: #6c757d; /* Gris - mismo color que estado-cerrado en calendario */
+.estadistica-item.estado-autorizado .estadistica-valor {
+    color: #28a745; /* Verde - mismo color que estado-autorizado en calendario */
 }
 
 .estadistica-texto {
@@ -426,6 +482,12 @@ body {
     background: #f0f4ff;
 }
 
+.dia-calendario.dia-actual {
+    background-color: #fffde7; /* Yellow background */
+    border-color: #ffd600; /* Yellow border */
+    border-width: 2px;
+}
+
 .dia-calendario.drag-over {
     border-color: #28a745;
     background: #e8f5e9;
@@ -466,7 +528,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    border-left: 5px solid transparent; /* Sidebar indicator base */
+    border-left: 15px solid transparent; /* Sidebar indicator base */
 }
 
 .trabajo-en-calendario:active {
@@ -521,15 +583,11 @@ body {
 
 /* Estados del permiso - Colores (Indicador Borde Izquierdo) */
 .trabajo-en-calendario.estado-solicitado {
-    border-left-color: #667eea; /* Azul - Estado por defecto */
+    border-left-color: #9FA8DA; /* Azul suave - Estado por defecto */
 }
 
-.trabajo-en-calendario.estado-ejecutado {
-    border-left-color: #28a745; /* Verde - Ejecutado */
-}
-
-.trabajo-en-calendario.estado-cerrado {
-    border-left-color: #6c757d; /* Gris - Cerrado */
+.trabajo-en-calendario.estado-autorizado {
+    border-left-color: #28a745; /* Verde - Autorizado */
 }
 
 /* Also ensure list items have the same colors if they have the class */
@@ -793,27 +851,19 @@ body {
 
 /* Estados del permiso en barras Gantt - Colores */
 .gantt-bar.estado-solicitado {
-    background: #667eea; /* Azul - Estado por defecto */
+    background: #9FA8DA; /* Azul suave - Estado por defecto */
 }
 
 .gantt-bar.estado-solicitado:hover {
-    background: #5568d3;
+    background: #7986CB;
 }
 
-.gantt-bar.estado-ejecutado {
-    background: #28a745; /* Verde - Ejecutado */
+.gantt-bar.estado-autorizado {
+    background: #28a745; /* Verde - Autorizado */
 }
 
-.gantt-bar.estado-ejecutado:hover {
+.gantt-bar.estado-autorizado:hover {
     background: #218838;
-}
-
-.gantt-bar.estado-cerrado {
-    background: #6c757d; /* Gris - Cerrado */
-}
-
-.gantt-bar.estado-cerrado:hover {
-    background: #5a6268;
 }
 
 .gantt-timeline-cell {

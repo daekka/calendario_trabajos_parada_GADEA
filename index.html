@@ -17,19 +17,34 @@
             <button id="exportBtn" class="export-btn" disabled>💾 Guardar Excel</button>
             <div class="fecha-controls">
                 <label for="fechaInicio" class="fecha-label">Fecha inicio:</label>
-                <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-16" />
+                <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-12" />
                 <label for="fechaFin" class="fecha-label">Fecha fin:</label>
                 <input type="date" id="fechaFin" class="fecha-input" value="2026-02-28" />
                 
-                <label for="filtroTipoMantenimiento" class="fecha-label">Tipo:</label>
-                <select id="filtroTipoMantenimiento" class="fecha-input">
-                    <option value="TODOS">TODOS</option>
-                    <option value="MTO_ELECTRICO">Mto. Eléctrico</option>
-                    <option value="MTO_MECANICO">Mto. Mecánico</option>
-                    <option value="GE">GE</option>
-                    <option value="MTO_IC">Mto. I&C</option>
-                    <option value="OTROS">OTROS</option>
-                </select>
+                <label class="fecha-label">Tipo:</label>
+                <div class="dropdown" id="filtroTipoDropdown">
+                    <button class="dropdown-toggle" id="dropdownBtn">TODOS</button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="TODOS" checked> TODOS
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="MTO_ELECTRICO"> Mto. Eléctrico
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="MTO_MECANICO"> Mto. Mecánico
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="GE"> GE
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="MTO_IC"> Mto. I&C
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="OTROS"> OTROS
+                        </label>
+                    </div>
+                </div>
 
                 <button id="actualizarCalendarioBtn" class="actualizar-btn">Actualizar calendario</button>
             </div>

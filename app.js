@@ -34,11 +34,12 @@ const fechaInicio = document.getElementById('fechaInicio');
 const fechaFin = document.getElementById('fechaFin');
 const actualizarCalendarioBtn = document.getElementById('actualizarCalendarioBtn');
 const ganttContainer = document.getElementById('ganttContainer');
-// NUEVA REFERENCIA
-const filtroTipoMantenimiento = document.getElementById('filtroTipoMantenimiento');
+// Referencias Dropdown
+const dropdownBtn = document.getElementById('dropdownBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
 
 // NUEVO ESTADO GLOBAL
-let filtroTipo = 'TODOS';
+let filtroTipos = new Set(['TODOS']);
 
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
@@ -47,11 +48,81 @@ if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
 }
 
-// NUEVO EVENT LISTENER (Add after other listeners)
-if (filtroTipoMantenimiento) {
-    filtroTipoMantenimiento.addEventListener('change', (e) => {
-        filtroTipo = e.target.value;
-        actualizarCalendario(); // Actualiza todas las vistas
+// Lógica Dropdown y Filtros
+if (dropdownBtn && dropdownMenu) {
+    // Toggle dropdown
+    dropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', (e) => {
+        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+        }
+    });
+
+    // Función auxiliar para actualizar texto
+    const actualizarTextoBoton = () => {
+        if (filtroTipos.has('TODOS')) {
+            dropdownBtn.textContent = 'TODOS';
+        } else {
+            const count = filtroTipos.size;
+            if (count === 0) dropdownBtn.textContent = 'Seleccionar...';
+            else if (count === 1) {
+                const checked = dropdownMenu.querySelector('input[type="checkbox"]:checked');
+                if(checked) dropdownBtn.textContent = checked.parentElement.textContent.trim();
+            } else {
+                dropdownBtn.textContent = `${count} seleccionados`;
+            }
+        }
+    };
+
+    // Manejar cambios en checkboxes
+    dropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const value = e.target.value;
+            const checked = e.target.checked;
+
+            if (value === 'TODOS') {
+                if (checked) {
+                    // Si se marca TODOS, desmarcar el resto
+                    dropdownMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        if (cb.value !== 'TODOS') cb.checked = false;
+                    });
+                    filtroTipos.clear();
+                    filtroTipos.add('TODOS');
+                } else {
+                     // Si se desmarca TODOS manualmente y no hay otros, volver a marcar o dejar vacío
+                     // Comportamiento: desmarcar TODOS sin marcar otro => vacío (0 resultados)
+                     filtroTipos.delete('TODOS');
+                }
+            } else {
+                // Si se marca uno específico
+                if (checked) {
+                    filtroTipos.add(value);
+                    // Desmarcar TODOS si estaba
+                    const todosCh = dropdownMenu.querySelector('input[value="TODOS"]');
+                    if (todosCh.checked) {
+                         todosCh.checked = false;
+                         filtroTipos.delete('TODOS');
+                    }
+                } else {
+                    filtroTipos.delete(value);
+                    // Si nos quedamos vacíos, ¿volvemos a TODOS?
+                    // Dejemos que el usuario decida. Si todo desmarcado -> muestra 0.
+                    if (filtroTipos.size === 0) {
+                        const todosCh = dropdownMenu.querySelector('input[value="TODOS"]');
+                        todosCh.checked = true;
+                        filtroTipos.add('TODOS');
+                    }
+                }
+            }
+            
+            actualizarTextoBoton();
+            actualizarCalendario();
+        });
     });
 }
 
@@ -159,8 +230,8 @@ function procesarDatos(jsonData) {
     const indiceValidoDe = headers.findIndex(h => 
         h && h.toString().trim() === 'Válido de'
     );
-    const indiceEstadoPermiso = headers.findIndex(h => 
-        h && h.toString().trim() === 'Estado permiso'
+    const indiceStatusSistema = headers.findIndex(h => 
+        h && h.toString().trim() === 'Status sistema'
     );
     // NUEVO: Buscar índice de Creado por
     const indiceCreadoPor = headers.findIndex(h => 
@@ -206,11 +277,13 @@ function procesarDatos(jsonData) {
         const valorValidoDe = indiceValidoDe !== -1 ? (row[indiceValidoDe] || '') : '';
         valoresOriginalesValidoDe.set(trabajo._indice, valorValidoDe);
         
-        // Cargar estado del permiso si existe en el Excel
-        if (indiceEstadoPermiso !== -1 && row[indiceEstadoPermiso]) {
-            const estadoPermiso = String(row[indiceEstadoPermiso] || '').trim().toUpperCase();
-            if (estadoPermiso === 'SOLICITADO' || estadoPermiso === 'EJECUTADO' || estadoPermiso === 'CERRADO') {
-                estadosPermisos.set(trabajo._indice, estadoPermiso);
+        // Cargar estado desde Status sistema
+        if (indiceStatusSistema !== -1 && row[indiceStatusSistema]) {
+            const status = String(row[indiceStatusSistema] || '').trim().toUpperCase();
+            if (status.includes('CREA')) {
+                estadosPermisos.set(trabajo._indice, 'SOLICITADO');
+            } else if (status.includes('PREP')) {
+                estadosPermisos.set(trabajo._indice, 'AUTORIZADO');
             }
         }
     }
@@ -365,7 +438,7 @@ function mostrarTrabajos() {
         const noAsignado = !trabajosAsignados.has(trabajo._indice);
         
         // Filtro por tipo de mantenimiento
-        const cumpleFiltro = filtroTipo === 'TODOS' || trabajo.tipoMantenimiento === filtroTipo;
+        const cumpleFiltro = filtroTipos.has('TODOS') || filtroTipos.has(trabajo.tipoMantenimiento);
         
         return noAsignado && cumpleFiltro;
     });
@@ -540,19 +613,22 @@ function actualizarEstadisticasTrabajos() {
     // Contar trabajos por estado
     let totalTrabajos = 0;
     let solicitados = 0;
-    let ejecutados = 0;
-    let cerrados = 0;
+    let autorizados = 0;
     
     // Contar solo trabajos asignados al calendario
     trabajosAsignados.forEach(indice => {
+        // Verificar filtro de tipo
+        const trabajo = trabajos[indice];
+        if (!filtroTipos.has('TODOS') && !filtroTipos.has(trabajo.tipoMantenimiento)) {
+            return;
+        }
+
         totalTrabajos++;
         const estado = estadosPermisos.get(indice) || 'SOLICITADO';
         if (estado === 'SOLICITADO') {
             solicitados++;
-        } else if (estado === 'EJECUTADO') {
-            ejecutados++;
-        } else if (estado === 'CERRADO') {
-            cerrados++;
+        } else if (estado === 'AUTORIZADO') {
+            autorizados++;
         }
     });
     
@@ -572,13 +648,9 @@ function actualizarEstadisticasTrabajos() {
             <span class="estadistica-label">Solicitados:</span>
             <span class="estadistica-valor">${solicitados}</span>
         </div>
-        <div class="estadistica-item estado-ejecutado">
-            <span class="estadistica-label">Ejecutados:</span>
-            <span class="estadistica-valor">${ejecutados}</span>
-        </div>
-        <div class="estadistica-item estado-cerrado">
-            <span class="estadistica-label">Cerrados:</span>
-            <span class="estadistica-valor">${cerrados}</span>
+        <div class="estadistica-item estado-autorizado">
+            <span class="estadistica-label">Autorizados:</span>
+            <span class="estadistica-valor">${autorizados}</span>
         </div>
     `;
 }
@@ -673,11 +745,17 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
     }
     
     // Días del mes actual (solo el rango especificado)
+    const hoy = new Date();
+    const hoyStr = formatearFecha(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+
     for (let dia = primerDiaAMostrar; dia <= ultimoDiaAMostrar; dia++) {
         const diaElement = document.createElement('div');
         diaElement.className = 'dia-calendario';
         
         const fechaStr = formatearFecha(ano, mes, dia);
+        if (fechaStr === hoyStr) {
+            diaElement.classList.add('dia-actual');
+        }
         diaElement.dataset.fecha = fechaStr;
         
         const numeroDia = document.createElement('div');
@@ -818,7 +896,7 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
     
     trabajosConHora.forEach(({ indice, hora, trabajo }) => {
         // NUEVO: Filtro global
-        if (filtroTipo !== 'TODOS' && trabajo.tipoMantenimiento !== filtroTipo) {
+        if (!filtroTipos.has('TODOS') && !filtroTipos.has(trabajo.tipoMantenimiento)) {
             return;
         }
 
@@ -930,8 +1008,7 @@ function mostrarEditorHora(indice, elemento, horaActual, fechaInicioStr, estadoA
                 <label for="estadoPermisoInput" style="display: block; margin-bottom: 5px; font-weight: 600;">Estado del permiso:</label>
                 <select id="estadoPermisoInput" class="estado-input" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
                     <option value="SOLICITADO" ${estadoActual === 'SOLICITADO' ? 'selected' : ''}>SOLICITADO</option>
-                    <option value="EJECUTADO" ${estadoActual === 'EJECUTADO' ? 'selected' : ''}>EJECUTADO</option>
-                    <option value="CERRADO" ${estadoActual === 'CERRADO' ? 'selected' : ''}>CERRADO</option>
+                    <option value="AUTORIZADO" ${estadoActual === 'AUTORIZADO' ? 'selected' : ''}>AUTORIZADO</option>
                 </select>
             </div>
             <div class="editor-hora-botones">
@@ -1265,7 +1342,7 @@ function generarGantt() {
             const trabajo = trabajos[indice];
             
             // NUEVO: Filtro global
-            if (filtroTipo !== 'TODOS' && trabajo.tipoMantenimiento !== filtroTipo) {
+            if (!filtroTipos.has('TODOS') && !filtroTipos.has(trabajo.tipoMantenimiento)) {
                 return;
             }
 
