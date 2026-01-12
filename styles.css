@@ -466,6 +466,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    border-left: 5px solid transparent; /* Sidebar indicator base */
 }
 
 .trabajo-en-calendario:active {
@@ -477,30 +478,66 @@ body {
     transform: scale(1.05);
 }
 
-/* Estados del permiso - Colores */
-.trabajo-en-calendario.estado-solicitado {
-    background: #667eea; /* Azul - Estado por defecto */
+/* Tipos de Mantenimiento - Colores de fondo */
+.trabajo-en-calendario.tipo-mto-electrico {
+    background-color: #90caf9; /* soft blue */
+    color: #000;
+}
+.trabajo-en-calendario.tipo-mto-electrico:hover {
+    background-color: #64b5f6;
 }
 
-.trabajo-en-calendario.estado-solicitado:hover {
-    background: #5568d3;
+.trabajo-en-calendario.tipo-mto-mecanico {
+    background-color: #f48fb1; /* pink */
+    color: #000;
+}
+.trabajo-en-calendario.tipo-mto-mecanico:hover {
+    background-color: #f06292;
+}
+
+.trabajo-en-calendario.tipo-ge {
+    background-color: #a5d6a7; /* green */
+    color: #000;
+}
+.trabajo-en-calendario.tipo-ge:hover {
+    background-color: #81c784;
+}
+
+.trabajo-en-calendario.tipo-mto-ic {
+    background-color: #ffe082; /* amber */
+    color: #000;
+}
+.trabajo-en-calendario.tipo-mto-ic:hover {
+    background-color: #ffd54f;
+}
+
+.trabajo-en-calendario.tipo-otros {
+    background-color: #eeeeee; /* grey */
+    color: #000;
+}
+.trabajo-en-calendario.tipo-otros:hover {
+    background-color: #e0e0e0;
+}
+
+/* Estados del permiso - Colores (Indicador Borde Izquierdo) */
+.trabajo-en-calendario.estado-solicitado {
+    border-left-color: #667eea; /* Azul - Estado por defecto */
 }
 
 .trabajo-en-calendario.estado-ejecutado {
-    background: #28a745; /* Verde - Ejecutado */
-}
-
-.trabajo-en-calendario.estado-ejecutado:hover {
-    background: #218838;
+    border-left-color: #28a745; /* Verde - Ejecutado */
 }
 
 .trabajo-en-calendario.estado-cerrado {
-    background: #6c757d; /* Gris - Cerrado */
+    border-left-color: #6c757d; /* Gris - Cerrado */
 }
 
-.trabajo-en-calendario.estado-cerrado:hover {
-    background: #5a6268;
-}
+/* Also ensure list items have the same colors if they have the class */
+.trabajo-item.tipo-mto-electrico { background-color: #90caf9; color: black; }
+.trabajo-item.tipo-mto-mecanico { background-color: #f48fb1; color: black; }
+.trabajo-item.tipo-ge { background-color: #a5d6a7; color: black; }
+.trabajo-item.tipo-mto-ic { background-color: #ffe082; color: black; }
+.trabajo-item.tipo-otros { background-color: #eeeeee; color: black; }
 
 .trabajo-texto {
     font-size: 0.75em;
@@ -810,3 +847,45 @@ body {
         flex-direction: column;
     }
 }
+
+/* Tipos de Mantenimiento en Gantt - Colores */
+.gantt-bar.tipo-mto-electrico {
+    background-color: #90caf9;
+    color: #000;
+}
+.gantt-bar.tipo-mto-electrico:hover {
+    background-color: #64b5f6;
+}
+
+.gantt-bar.tipo-mto-mecanico {
+    background-color: #f48fb1;
+    color: #000;
+}
+.gantt-bar.tipo-mto-mecanico:hover {
+    background-color: #f06292;
+}
+
+.gantt-bar.tipo-ge {
+    background-color: #a5d6a7;
+    color: #000;
+}
+.gantt-bar.tipo-ge:hover {
+    background-color: #81c784;
+}
+
+.gantt-bar.tipo-mto-ic {
+    background-color: #ffe082;
+    color: #000;
+}
+.gantt-bar.tipo-mto-ic:hover {
+    background-color: #ffd54f;
+}
+
+.gantt-bar.tipo-otros {
+    background-color: #eeeeee;
+    color: #000;
+}
+.gantt-bar.tipo-otros:hover {
+    background-color: #e0e0e0;
+}
+

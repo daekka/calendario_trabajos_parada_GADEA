@@ -16,6 +16,15 @@ const COLUMNAS_ESPERADAS = [
     'Texto explicativo', 'Válido de', 'Hora inicio validez', 'Validez a', 'Hora fin de validez'
 ];
 
+// NUVEA CONSTANTE: Mapeo de Usuarios
+const MTO_MAPPING = {
+    'UF183530': { id: 'MTO_ELECTRICO', label: 'Mto. Eléctrico', clase: 'tipo-mto-electrico' },
+    'UF474650': { id: 'MTO_MECANICO', label: 'Mto. Mecánico', clase: 'tipo-mto-mecanico' },
+    'UF076560': { id: 'GE', label: 'GE', clase: 'tipo-ge' },
+    'UF775634': { id: 'MTO_IC', label: 'Mto. I&C', clase: 'tipo-mto-ic' },
+    'DEFAULT': { id: 'OTROS', label: 'OTROS', clase: 'tipo-otros' }
+};
+
 // Referencias a elementos del DOM
 const fileInput = document.getElementById('fileInput');
 const exportBtn = document.getElementById('exportBtn');
@@ -25,12 +34,25 @@ const fechaInicio = document.getElementById('fechaInicio');
 const fechaFin = document.getElementById('fechaFin');
 const actualizarCalendarioBtn = document.getElementById('actualizarCalendarioBtn');
 const ganttContainer = document.getElementById('ganttContainer');
+// NUEVA REFERENCIA
+const filtroTipoMantenimiento = document.getElementById('filtroTipoMantenimiento');
+
+// NUEVO ESTADO GLOBAL
+let filtroTipo = 'TODOS';
 
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
+}
+
+// NUEVO EVENT LISTENER (Add after other listeners)
+if (filtroTipoMantenimiento) {
+    filtroTipoMantenimiento.addEventListener('change', (e) => {
+        filtroTipo = e.target.value;
+        actualizarCalendario(); // Actualiza todas las vistas
+    });
 }
 
 // Manejar cambio de pestañas
@@ -88,9 +110,8 @@ function handleFileUpload(event) {
             // Procesar los datos
             procesarDatos(jsonData);
             
-            // Mostrar trabajos y generar calendario
-            mostrarTrabajos();
-            generarCalendario();
+            // Distribuir trabajos según fechas de parada
+            distribuirTrabajos();
             
             // Actualizar Gantt si está visible
             if (document.getElementById('ganttTab').classList.contains('active')) {
@@ -138,17 +159,30 @@ function procesarDatos(jsonData) {
     const indiceValidoDe = headers.findIndex(h => 
         h && h.toString().trim() === 'Válido de'
     );
-    const indiceActualizadaFecha = headers.findIndex(h => 
-        h && (h.toString().trim() === 'Actualizada fecha' || h.toString().trim() === 'Actualizada Fecha')
-    );
     const indiceEstadoPermiso = headers.findIndex(h => 
         h && h.toString().trim() === 'Estado permiso'
+    );
+    // NUEVO: Buscar índice de Creado por
+    const indiceCreadoPor = headers.findIndex(h => 
+        h && h.toString().trim() === 'Creado por'
+    );
+    // NUEVO: Buscar índice de Solicitud para filtrar
+    const indiceSolicitud = headers.findIndex(h => 
+        h && h.toString().trim() === 'Solicitud'
     );
     
     // Procesar cada fila (empezando desde la fila 1, ya que 0 son los headers)
     for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i];
         if (!row || row.length === 0) continue;
+        
+        // Filtrar trabajos cuya Solicitud empieza por "4"
+        if (indiceSolicitud !== -1) {
+            const solicitud = String(row[indiceSolicitud] || '').trim();
+            if (solicitud.startsWith('4')) {
+                continue;
+            }
+        }
         
         // Crear objeto trabajo con todos los campos
         const trabajo = {};
@@ -158,6 +192,12 @@ function procesarDatos(jsonData) {
             }
         });
         
+        // NUEVO: Determinar Tipo de Mantenimiento y Clase CSS
+        const creadoPor = indiceCreadoPor !== -1 ? String(row[indiceCreadoPor] || '').trim() : '';
+        const mapping = MTO_MAPPING[creadoPor] || MTO_MAPPING['DEFAULT'];
+        trabajo.tipoMantenimiento = mapping.id;
+        trabajo.claseTipo = mapping.clase;
+
         // Añadir índice para referencia
         trabajo._indice = trabajos.length;
         trabajos.push(trabajo);
@@ -173,38 +213,68 @@ function procesarDatos(jsonData) {
                 estadosPermisos.set(trabajo._indice, estadoPermiso);
             }
         }
-        
-        // Verificar si el trabajo fue actualizado (campo "Actualizada fecha")
-        const actualizadaFecha = indiceActualizadaFecha !== -1 ? 
-            String(row[indiceActualizadaFecha] || '').trim().toLowerCase() : '';
-        const fueActualizado = actualizadaFecha === 'sí' || actualizadaFecha === 'si' || actualizadaFecha === 'yes' || actualizadaFecha === 'true' || actualizadaFecha === '1';
-        
-        // Si el trabajo fue actualizado, procesar la fecha de "Válido de" y marcarlo como asignado
-        if (fueActualizado && indiceValidoDe !== -1 && row[indiceValidoDe]) {
-            const fechaValidoDe = row[indiceValidoDe];
-            const fechaStr = normalizarFecha(fechaValidoDe);
-            
-            if (fechaStr) {
-                // Si la fecha contiene múltiples fechas separadas por coma, procesar cada una
-                const fechas = fechaStr.split(',').map(f => f.trim()).filter(f => f);
-                
-                if (fechas.length > 0) {
-                    fechas.forEach(fecha => {
-                        if (!trabajosConFechas.has(fecha)) {
-                            trabajosConFechas.set(fecha, []);
-                        }
-                        const trabajosFecha = trabajosConFechas.get(fecha);
-                        if (!trabajosFecha.includes(trabajo._indice)) {
-                            trabajosFecha.push(trabajo._indice);
-                        }
-                    });
-                    // Marcar como asignado solo si fue actualizado
-                    trabajosAsignados.add(trabajo._indice);
-                    trabajosModificados.add(trabajo._indice);
-                }
-            }
-        }
     }
+}
+
+// Distribuir trabajos entre listado y calendario según las fechas de la parada
+function distribuirTrabajos() {
+    trabajosConFechas.clear();
+    trabajosAsignados.clear();
+    
+    // Obtener fechas de la parada
+    const fechaInicioStr = fechaInicio.value;
+    const fechaFinStr = fechaFin.value;
+    
+    // Si no hay rango de parada definido, dejar todo sin asignar (en listado)
+    if (!fechaInicioStr || !fechaFinStr) {
+        mostrarTrabajos();
+        generarCalendario();
+        return;
+    }
+    
+    // No necesitamos convertir a Date para comparaciones de string YYYY-MM-DD si el formato es consistente,
+    // pero para seguridad en comparaciones:
+    
+    trabajos.forEach(trabajo => {
+        // Obtenemos la fecha ORIGINAL del trabajo (no modificada)
+        // El requisito es re-evaluar la asignación basada en si CAEN DENTRO O NO.
+        // Si el usuario modificó la fecha, ¿deberíamos respetar su modificación o la fecha original?
+        // Asumiendo que "distribuir" es una operación de reset basada en criterio.
+        // Pero si el usuario ya movió cosas en la herramienta, esas modificaciones están en "fechasFinTrabajos" o implícitas en "trabajosConFechas"?
+        // No, el drag & drop actualiza "trabajosConFechas".
+        // Vamos a usar la fecha ORIGINAL de "Válido de" para la distribución automática.
+        
+        const valorValidoDe = valoresOriginalesValidoDe.get(trabajo._indice);
+        const fechaStr = normalizarFecha(valorValidoDe);
+        
+        if (fechaStr) {
+            // Manejar múltiples fechas separadas por coma
+            const fechas = fechaStr.split(',').map(f => f.trim()).filter(f => f);
+            
+            fechas.forEach(unaFecha => {
+                // Verificar si la fecha cae dentro del rango de parada [fechaInicioStr, fechaFinStr]
+                // Comparación lexicográfica funciona para formato YYYY-MM-DD
+                if (unaFecha >= fechaInicioStr && unaFecha <= fechaFinStr) {
+                    // DENTRO -> Asignar al calendario
+                    if (!trabajosConFechas.has(unaFecha)) {
+                        trabajosConFechas.set(unaFecha, []);
+                    }
+                    const lista = trabajosConFechas.get(unaFecha);
+                    if (!lista.includes(trabajo._indice)) {
+                        lista.push(trabajo._indice);
+                    }
+                    trabajosAsignados.add(trabajo._indice);
+                    
+                    // Nota: No marcamos como modificado porque es la asignación automática original
+                }
+                // FUERA -> No hacer nada, se queda en el listado (sin asignar)
+            });
+        }
+    });
+
+    // Refrescar la interfaz
+    mostrarTrabajos();
+    generarCalendario();
 }
 
 // Normalizar fecha a formato YYYY-MM-DD
@@ -290,12 +360,14 @@ function mostrarTrabajos() {
         return;
     }
     
-    // Filtrar trabajos: solo mostrar los que NO empiezan por "4" en Solicitud y NO han sido asignados
+    // Filtrar trabajos: solo mostrar los que NO han sido asignados y cumplen filtro de tipo
     const trabajosFiltrados = trabajos.filter((trabajo, index) => {
-        const solicitud = String(trabajo['Solicitud'] || '').trim();
-        const noEmpiezaPor4 = !solicitud.startsWith('4');
         const noAsignado = !trabajosAsignados.has(trabajo._indice);
-        return noEmpiezaPor4 && noAsignado;
+        
+        // Filtro por tipo de mantenimiento
+        const cumpleFiltro = filtroTipo === 'TODOS' || trabajo.tipoMantenimiento === filtroTipo;
+        
+        return noAsignado && cumpleFiltro;
     });
     
     // Mostrar contador de trabajos restantes
@@ -316,6 +388,12 @@ function mostrarTrabajos() {
     trabajosFiltrados.forEach((trabajo) => {
         const trabajoItem = document.createElement('div');
         trabajoItem.className = 'trabajo-item';
+        
+        // NUEVO: Añadir clase específica del tipo
+        if (trabajo.claseTipo) {
+            trabajoItem.classList.add(trabajo.claseTipo);
+        }
+        
         trabajoItem.draggable = true;
         trabajoItem.dataset.indice = trabajo._indice; // Usar el índice original del trabajo
         
@@ -445,7 +523,7 @@ function generarCalendario() {
 
 // Actualizar calendario cuando cambien las fechas
 function actualizarCalendario() {
-    generarCalendario();
+    distribuirTrabajos();
     // Actualizar Gantt si está visible
     if (document.getElementById('ganttTab').classList.contains('active')) {
         generarGantt();
@@ -674,8 +752,8 @@ function obtenerHoraTrabajo(indice) {
     
     // Si no, usar la hora del trabajo o 7:00 por defecto
     const trabajo = trabajos[indice];
-    const hora = trabajo['Hora inicio validez'] || '';
-    return hora.trim() || '07:00';
+    const hora = trabajo['Hora inicio validez'];
+    return (hora != null ? String(hora).trim() : '') || '07:00';
 }
 
 // Normalizar hora a formato HH:MM
@@ -739,8 +817,19 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
     trabajosConHora.sort((a, b) => compararHoras(a.hora, b.hora));
     
     trabajosConHora.forEach(({ indice, hora, trabajo }) => {
+        // NUEVO: Filtro global
+        if (filtroTipo !== 'TODOS' && trabajo.tipoMantenimiento !== filtroTipo) {
+            return;
+        }
+
         const trabajoElement = document.createElement('div');
         trabajoElement.className = 'trabajo-en-calendario';
+        
+        // NUEVO: Añadir clase de tipo
+        if (trabajo.claseTipo) {
+            trabajoElement.classList.add(trabajo.claseTipo);
+        }
+        
         trabajoElement.draggable = true;
         trabajoElement.dataset.indice = indice;
         trabajoElement.dataset.fechaOrigen = fechaStr; // Guardar fecha de origen
@@ -1107,7 +1196,7 @@ function exportarExcel() {
                 if (columna === 'Hora inicio validez') {
                     if (horasTrabajos.has(indice)) {
                         valor = horasTrabajos.get(indice);
-                    } else if (!valor || valor.trim() === '') {
+                    } else if (!valor || String(valor).trim() === '') {
                         valor = '07:00'; // Valor por defecto si está vacío
                     }
                 }
@@ -1174,6 +1263,12 @@ function generarGantt() {
     for (const [fechaStr, indices] of trabajosConFechas.entries()) {
         indices.forEach(indice => {
             const trabajo = trabajos[indice];
+            
+            // NUEVO: Filtro global
+            if (filtroTipo !== 'TODOS' && trabajo.tipoMantenimiento !== filtroTipo) {
+                return;
+            }
+
             const fechaInicioTrabajo = normalizarFecha(fechaStr);
             
             // Obtener fecha de finalización
@@ -1207,7 +1302,7 @@ function generarGantt() {
     }
     
     if (trabajosConFechasGantt.length === 0) {
-        ganttContainer.innerHTML = '<p class="empty-message">No hay trabajos asignados a fechas para mostrar en el Gantt</p>';
+        ganttContainer.innerHTML = '<p class="empty-message">No hay trabajos asignados (o filtrados) para mostrar en el Gantt</p>';
         return;
     }
     
@@ -1311,10 +1406,6 @@ function generarGantt() {
         const anchoCelda = 60;
         const posicionPx = indiceInicio * anchoCelda;
         const anchoPx = duracion * anchoCelda;
-        const anchoTotalTimeline = fechasTimeline.length * anchoCelda;
-        
-        const posicionPorcentaje = (posicionPx / anchoTotalTimeline) * 100;
-        const anchoPorcentaje = (anchoPx / anchoTotalTimeline) * 100;
         
         // Obtener texto breve
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
@@ -1342,8 +1433,8 @@ function generarGantt() {
             html += `<div class="gantt-timeline-cell ${clase}"></div>`;
         });
         
-        // Añadir barra del trabajo usando píxeles para mayor precisión con clase de estado
-        html += `<div class="gantt-bar ${claseEstado}" style="left: ${posicionPx}px; width: ${anchoPx}px;" title="${textoBreve} - ${fechaIni} a ${fechaF} - ${estadoPermiso}">${textoBreve.substring(0, 20)}${textoBreve.length > 20 ? '...' : ''}</div>`;
+        // NUEVO: Añadir barra del trabajo usando píxeles para mayor precisión con clase de estado y TIPO
+        html += `<div class="gantt-bar ${claseEstado} ${trabajo.claseTipo || ''}" style="left: ${posicionPx}px; width: ${anchoPx}px;" title="${textoBreve} - ${fechaIni} a ${fechaF} - ${estadoPermiso}">${textoBreve.substring(0, 20)}${textoBreve.length > 20 ? '...' : ''}</div>`;
         
         html += '</div></div>';
     });

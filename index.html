@@ -20,6 +20,17 @@
                 <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-16" />
                 <label for="fechaFin" class="fecha-label">Fecha fin:</label>
                 <input type="date" id="fechaFin" class="fecha-input" value="2026-02-28" />
+                
+                <label for="filtroTipoMantenimiento" class="fecha-label">Tipo:</label>
+                <select id="filtroTipoMantenimiento" class="fecha-input">
+                    <option value="TODOS">TODOS</option>
+                    <option value="MTO_ELECTRICO">Mto. Eléctrico</option>
+                    <option value="MTO_MECANICO">Mto. Mecánico</option>
+                    <option value="GE">GE</option>
+                    <option value="MTO_IC">Mto. I&C</option>
+                    <option value="OTROS">OTROS</option>
+                </select>
+
                 <button id="actualizarCalendarioBtn" class="actualizar-btn">Actualizar calendario</button>
             </div>
         </div>
