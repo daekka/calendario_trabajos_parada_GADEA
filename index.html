@@ -66,6 +66,7 @@
                 <div class="tabs-container">
                     <div class="tabs">
                         <button class="tab-button active" data-tab="calendario">📅 Calendario</button>
+                        <button class="tab-button" data-tab="listado">📋 Listado</button>
                         <button class="tab-button" data-tab="gantt">📊 Gantt</button>
                     </div>
                     <div id="estadisticasTrabajos" class="estadisticas-trabajos"></div>
@@ -79,6 +80,22 @@
                     </div>
                 </div>
                 
+                <div class="tab-content" id="listadoTab">
+                    <div class="listado-section">
+                        <div class="listado-controls">
+                            <label for="listadoFechaInicio" class="fecha-label">Desde:</label>
+                            <input type="date" id="listadoFechaInicio" class="fecha-input" value="2026-01-12" />
+                            <label for="listadoFechaFin" class="fecha-label">Hasta:</label>
+                            <input type="date" id="listadoFechaFin" class="fecha-input" value="2026-02-28" />
+                            <button id="actualizarListadoBtn" class="actualizar-btn">Actualizar</button>
+                            <button id="imprimirListadoBtn" class="imprimir-btn">🖨️ Imprimir</button>
+                        </div>
+                        <div id="listadoContainer" class="listado-container">
+                            <p class="empty-message">Carga un archivo Excel para ver el listado de trabajos</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tab-content" id="ganttTab">
                     <div class="gantt-section">
                         <div id="ganttContainer" class="gantt-container">
