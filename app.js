@@ -25,9 +25,7 @@ const MTO_MAPPING = {
     'DEFAULT': { id: 'OTROS', label: 'OTROS', clase: 'tipo-otros' }
 };
 
-// Configuración de Supabase
-const SUPABASE_URL = 'https://uifgjhpenpunkwrtrsjr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpZmdqaHBlbnB1bmt3cnRyc2pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNzUwMTMsImV4cCI6MjA4Mzg1MTAxM30.C4DOHxSw15znI4KoQxwsMRISRovHPc6zfYvvYSsWW-Y';
+// Configuración de Supabase (URL y KEY en config.js)
 let supabaseClient = null;
 
 // Inicializar cliente de Supabase
