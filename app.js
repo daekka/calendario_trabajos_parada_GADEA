@@ -207,14 +207,14 @@ function handleFileUpload(event) {
     reader.onload = function(e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy' });
             
             // Leer la primera hoja
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             
-            // Convertir a JSON
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            // Convertir a JSON con fechas formateadas
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd/mm/yyyy' });
             
             if (jsonData.length < 2) {
                 alert('El archivo Excel está vacío o no tiene datos válidos');
@@ -223,6 +223,17 @@ function handleFileUpload(event) {
 
             // La primera fila son los encabezados
             const headers = jsonData[0];
+            
+            // DEBUG: Mostrar headers y primeras filas para depuración
+            console.log('=== DEPURACIÓN EXCEL ===');
+            console.log('Headers encontrados:', headers);
+            console.log('Número de filas:', jsonData.length);
+            if (jsonData.length > 1) {
+                console.log('Primera fila de datos:', jsonData[1]);
+            }
+            if (jsonData.length > 2) {
+                console.log('Segunda fila de datos:', jsonData[2]);
+            }
             
             // Validar que las columnas coincidan (aproximadamente)
             if (!validarColumnas(headers)) {
@@ -329,6 +340,18 @@ function procesarDatos(jsonData) {
         const valorValidoDe = indiceValidoDe !== -1 ? (row[indiceValidoDe] || '') : '';
         valoresOriginalesValidoDe.set(trabajo._indice, valorValidoDe);
         
+        // DEBUG: Mostrar primeros trabajos procesados
+        if (trabajos.length <= 3) {
+            console.log(`Trabajo ${trabajos.length}:`, {
+                orden: trabajo['Orden'],
+                textoBrve: trabajo['Texto breve'],
+                validoDe: valorValidoDe,
+                validoDeNormalizado: normalizarFecha(valorValidoDe),
+                creadoPor: trabajo['Creado por'],
+                tipoMto: trabajo.tipoMantenimiento
+            });
+        }
+        
         // Cargar estado desde Status sistema
         if (indiceStatusSistema !== -1 && row[indiceStatusSistema]) {
             const status = String(row[indiceStatusSistema] || '').trim().toUpperCase();
@@ -431,24 +454,38 @@ function normalizarFecha(fecha) {
     
     // Intentar parsear como string
     if (typeof fecha === 'string') {
-        // Intentar diferentes formatos
-        const formatos = [
-            /(\d{4})-(\d{2})-(\d{2})/, // YYYY-MM-DD
-            /(\d{2})\/(\d{2})\/(\d{4})/, // DD/MM/YYYY
-            /(\d{4})\/(\d{2})\/(\d{2})/, // YYYY/MM/DD
-        ];
+        // Limpiar el string
+        fecha = fecha.trim();
         
-        for (const formato of formatos) {
-            const match = fecha.match(formato);
-            if (match) {
-                if (formato === formatos[0] || formato === formatos[2]) {
-                    // YYYY-MM-DD o YYYY/MM/DD
-                    return `${match[1]}-${match[2]}-${match[3]}`;
-                } else {
-                    // DD/MM/YYYY
-                    return `${match[3]}-${match[2]}-${match[1]}`;
-                }
-            }
+        // Intentar diferentes formatos
+        // YYYY-MM-DD
+        let match = fecha.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            return `${match[1]}-${match[2]}-${match[3]}`;
+        }
+        
+        // DD/MM/YYYY
+        match = fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (match) {
+            return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
+        }
+        
+        // DD.MM.YYYY
+        match = fecha.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+        if (match) {
+            return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
+        }
+        
+        // YYYY/MM/DD
+        match = fecha.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+        if (match) {
+            return `${match[1]}-${match[2]}-${match[3]}`;
+        }
+        
+        // DD-MM-YYYY
+        match = fecha.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+        if (match) {
+            return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
         }
         
         // Intentar parsear con Date
