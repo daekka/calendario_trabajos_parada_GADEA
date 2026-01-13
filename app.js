@@ -25,9 +25,29 @@ const MTO_MAPPING = {
     'DEFAULT': { id: 'OTROS', label: 'OTROS', clase: 'tipo-otros' }
 };
 
+// Configuración de Supabase
+const SUPABASE_URL = 'https://uifgjhpenpunkwrtrsjr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpZmdqaHBlbnB1bmt3cnRyc2pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNzUwMTMsImV4cCI6MjA4Mzg1MTAxM30.C4DOHxSw15znI4KoQxwsMRISRovHPc6zfYvvYSsWW-Y';
+let supabaseClient = null;
+
+// Inicializar cliente de Supabase
+if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    if (SUPABASE_URL.startsWith('http')) {
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.warn('Error inicializando Supabase, verifique credenciales', e);
+        }
+    } else {
+        console.warn('Supabase URL no configurada, se omite inicialización.');
+    }
+}
+
 // Referencias a elementos del DOM
 const fileInput = document.getElementById('fileInput');
 const exportBtn = document.getElementById('exportBtn');
+const uploadSupabaseBtn = document.getElementById('uploadSupabaseBtn');
+const readSupabaseBtn = document.getElementById('readSupabaseBtn');
 const trabajosList = document.getElementById('trabajosList');
 const calendarioContainer = document.getElementById('calendarioContainer');
 const fechaInicio = document.getElementById('fechaInicio');
@@ -44,6 +64,9 @@ let filtroTipos = new Set(['TODOS']);
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
+if (uploadSupabaseBtn) uploadSupabaseBtn.addEventListener('click', subirDatosSupabase);
+if (readSupabaseBtn) readSupabaseBtn.addEventListener('click', leerDatosSupabase);
+
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
 }
@@ -148,6 +171,11 @@ document.querySelectorAll('.tab-button').forEach(button => {
 
 // Función para manejar la carga del archivo Excel
 function handleFileUpload(event) {
+    if (typeof XLSX === 'undefined') {
+        alert('Error crítica: La librería SheetJS no está cargada. Revise la conexión a internet o el archivo index.html');
+        return;
+    }
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -1238,67 +1266,77 @@ function actualizarDiaCalendario(fechaStr) {
     }
 }
 
-// Exportar a Excel
-function exportarExcel() {
+// Función auxiliar para obtener datos completos (para Exportar y para Subir a Nube)
+function obtenerDatosCompletos() {
     if (trabajos.length === 0) {
-        alert('No hay trabajos para exportar');
-        return;
+        return null;
     }
     
-    try {
-        // Crear array de datos para exportar
-        const datosExportar = [];
+    // Crear array de datos para exportar
+    const datosExportar = [];
+    
+    // Añadir encabezados (columnas originales + nuevas columnas)
+    const headers = COLUMNAS_ESPERADAS.slice();
+    headers.push('Actualizada fecha');
+    headers.push('Estado permiso');
+    datosExportar.push(headers);
+    
+    // Procesar cada trabajo
+    trabajos.forEach((trabajo, indice) => {
+        const fila = [];
         
-        // Añadir encabezados (columnas originales + nuevas columnas)
-        const headers = COLUMNAS_ESPERADAS.slice();
-        headers.push('Actualizada fecha');
-        headers.push('Estado permiso');
-        datosExportar.push(headers);
-        
-        // Procesar cada trabajo
-        trabajos.forEach((trabajo, indice) => {
-            const fila = [];
+        // Añadir todos los campos originales en el orden esperado
+        COLUMNAS_ESPERADAS.forEach((columna, colIndex) => {
+            let valor = trabajo[columna] || '';
             
-            // Añadir todos los campos originales en el orden esperado
-            COLUMNAS_ESPERADAS.forEach((columna, colIndex) => {
-                let valor = trabajo[columna] || '';
-                
-                // Si es la columna "Válido de", actualizar con la fecha asignada
-                if (columna === 'Válido de') {
-                    const fechaAsignada = obtenerFechaTrabajo(indice);
-                    valor = fechaAsignada || valor; // Usar fecha asignada si existe, sino mantener original
+            // Si es la columna "Válido de", actualizar con la fecha asignada
+            if (columna === 'Válido de') {
+                const fechaAsignada = obtenerFechaTrabajo(indice);
+                valor = fechaAsignada || valor; // Usar fecha asignada si existe, sino mantener original
+            }
+            
+            // Si es la columna "Hora inicio validez", usar la hora modificada si existe
+            if (columna === 'Hora inicio validez') {
+                if (horasTrabajos.has(indice)) {
+                    valor = horasTrabajos.get(indice);
+                } else if (!valor || String(valor).trim() === '') {
+                    valor = '07:00'; // Valor por defecto si está vacío
                 }
-                
-                // Si es la columna "Hora inicio validez", usar la hora modificada si existe
-                if (columna === 'Hora inicio validez') {
-                    if (horasTrabajos.has(indice)) {
-                        valor = horasTrabajos.get(indice);
-                    } else if (!valor || String(valor).trim() === '') {
-                        valor = '07:00'; // Valor por defecto si está vacío
-                    }
+            }
+            
+            // Si es la columna "Validez a", usar la fecha modificada si existe
+            if (columna === 'Validez a') {
+                if (fechasFinTrabajos.has(indice)) {
+                    valor = fechasFinTrabajos.get(indice);
                 }
-                
-                // Si es la columna "Validez a", usar la fecha modificada si existe
-                if (columna === 'Validez a') {
-                    if (fechasFinTrabajos.has(indice)) {
-                        valor = fechasFinTrabajos.get(indice);
-                    }
-                }
-                
-                fila.push(valor);
-            });
+            }
             
-            // Añadir campo "Actualizada fecha" (Sí/No)
-            const actualizadaFecha = trabajosModificados.has(indice) ? 'Sí' : 'No';
-            fila.push(actualizadaFecha);
-            
-            // Añadir campo "Estado permiso"
-            const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
-            fila.push(estadoPermiso);
-            
-            datosExportar.push(fila);
+            fila.push(valor);
         });
         
+        // Añadir campo "Actualizada fecha" (Sí/No)
+        const actualizadaFecha = trabajosModificados.has(indice) ? 'Sí' : 'No';
+        fila.push(actualizadaFecha);
+        
+        // Añadir campo "Estado permiso"
+        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+        fila.push(estadoPermiso);
+        
+        datosExportar.push(fila);
+    });
+    
+    return datosExportar;
+}
+
+// Exportar a Excel
+function exportarExcel() {
+    try {
+        const datosExportar = obtenerDatosCompletos();
+        if (!datosExportar) {
+            alert('No hay trabajos para exportar');
+            return;
+        }
+
         // Crear workbook
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(datosExportar);
@@ -1324,6 +1362,123 @@ function exportarExcel() {
     } catch (error) {
         console.error('Error al exportar:', error);
         alert('Error al exportar el archivo: ' + error.message);
+    }
+}
+
+// Subir datos a Supabase
+async function subirDatosSupabase() {
+    if (!supabaseClient) { 
+        alert('Supabase no configurado correctamente. Verifique las credenciales en el código.'); 
+        return; 
+    }
+    
+    const password = prompt("Ingrese clave de acceso para subir datos:");
+    if (password !== "uf183530") {
+        alert("Clave incorrecta. Acceso denegado.");
+        return;
+    }
+
+    const datos = obtenerDatosCompletos();
+    if (!datos) { 
+        alert('No hay datos para subir'); 
+        return; 
+    }
+
+    try {
+        // Mostrar indicador de carga
+        const btnTexto = uploadSupabaseBtn.innerText;
+        uploadSupabaseBtn.innerText = 'Subiendo...';
+        uploadSupabaseBtn.disabled = true;
+
+        const { error } = await supabaseClient
+            .from('backup_excel')
+            .insert([
+                { data: datos } // Supabase generará created_at automáticamente si está configurado, o añadimos
+                // { data: datos, created_at: new Date() }
+            ]);
+            
+        if (error) throw error;
+        alert('✅ Datos subidos correctamente a la nube.');
+    } catch (error) {
+        console.error('Error subiendo a Supabase:', error);
+        alert('❌ Error al subir: ' + error.message);
+    } finally {
+        uploadSupabaseBtn.innerText = btnTexto;
+        uploadSupabaseBtn.disabled = false;
+    }
+}
+
+// Leer datos de Supabase
+async function leerDatosSupabase(param) {
+    const isAutoLoad = param === true;
+
+    if (!supabaseClient) { 
+        if (!isAutoLoad) alert('Supabase no configurado correctamente.');
+        return; 
+    }
+
+    let btnTexto = '';
+    if (readSupabaseBtn) {
+        btnTexto = readSupabaseBtn.innerText;
+        readSupabaseBtn.innerText = 'Cargando...';
+        readSupabaseBtn.disabled = true;
+    }
+
+    try {
+        // Obtener el último registro ordenado por fecha de creación (descendiente)
+        const { data, error } = await supabaseClient
+            .from('backup_excel')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            if (!isAutoLoad) alert('No se encontraron registros guardados en la nube.');
+            return;
+        }
+
+        const jsonData = data[0].data;
+        console.log("Datos recibidos de Supabase:", jsonData);
+        
+        if (!Array.isArray(jsonData) || jsonData.length < 2) {
+            if (!isAutoLoad) alert('Los datos descargados no tienen el formato correcto.');
+            return;
+        }
+
+        // Validar headers (fila 0)
+        const headers = jsonData[0];
+        if (!validarColumnas(headers)) {
+            if (!isAutoLoad) alert('Las columnas de los datos guardados no coinciden con la versión actual.');
+            return;
+        }
+
+        // Procesar datos (Reutilizamos la lógica de carga de archivo)
+        procesarDatos(jsonData);
+        
+        // Distribuir trabajos en calendario
+        distribuirTrabajos();
+        
+        // Actualizar visualizaciones
+        if (document.getElementById('ganttTab').classList.contains('active')) {
+            generarGantt();
+        }
+        actualizarEstadisticasTrabajos();
+        
+        // Habilitar botón de exportar local
+        exportBtn.disabled = false;
+
+        if (!isAutoLoad) alert('✅ Datos cargados exitosamente desde la nube.');
+
+    } catch (error) {
+        console.error('Error leyendo de Supabase:', error);
+        if (!isAutoLoad) alert('❌ Error al leer de la nube: ' + error.message);
+    } finally {
+        if (readSupabaseBtn && btnTexto) {
+            readSupabaseBtn.innerText = btnTexto;
+            readSupabaseBtn.disabled = false;
+        }
     }
 }
 
@@ -1546,3 +1701,12 @@ function generarGantt() {
         }
     }, 0);
 }
+
+
+// Cargar automáticamente datos de la nube al iniciar
+document.addEventListener('DOMContentLoaded', () => {
+    if (supabaseClient) {
+        console.log('Iniciando carga automática desde la nube...');
+        leerDatosSupabase(true);
+    }
+});

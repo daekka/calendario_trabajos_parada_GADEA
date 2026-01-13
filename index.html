@@ -6,6 +6,7 @@
     <title>Calendario de Trabajos</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
@@ -15,6 +16,8 @@
                 <input type="file" id="fileInput" accept=".xlsx,.xls" />
             </label>
             <button id="exportBtn" class="export-btn" disabled>💾 Guardar Excel</button>
+            <button id="uploadSupabaseBtn" class="supabase-btn">☁️ Subir a Nube</button>
+            <button id="readSupabaseBtn" class="supabase-btn">📥 Leer de Nube</button>
             <div class="fecha-controls">
                 <label for="fechaInicio" class="fecha-label">Fecha inicio:</label>
                 <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-12" />
