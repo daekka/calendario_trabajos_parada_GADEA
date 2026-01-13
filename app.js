@@ -13,7 +13,8 @@ const COLUMNAS_ESPERADAS = [
     'Orden', 'Solicitud', 'Tp.doc.descargo', 'Texto breve', 'Status sistema',
     'Permisos', 'Documento', 'Texto explicativo', 'Interlocutor', 'Catálogo',
     'Creado por', 'Fecha de creación', 'Ubicación técnica', 'Equipo',
-    'Texto explicativo', 'Válido de', 'Hora inicio validez', 'Validez a', 'Hora fin de validez'
+    'Texto explicativo', 'Válido de', 'Hora inicio validez', 'Validez a', 'Hora fin de validez',
+    'Utilización'
 ];
 
 // NUVEA CONSTANTE: Mapeo de Usuarios
@@ -304,6 +305,23 @@ function procesarDatos(jsonData) {
     const indiceSolicitud = headers.findIndex(h => 
         h && h.toString().trim() === 'Solicitud'
     );
+    // NUEVO: Buscar índice de Utilización para detectar descargos
+    const indiceUtilizacion = headers.findIndex(h => 
+        h && h.toString().trim() === 'Utilización'
+    );
+    
+    // DEBUG: Mostrar información sobre la columna Utilización
+    console.log('=== DEPURACIÓN UTILIZACIÓN ===');
+    console.log('Headers encontrados:', headers);
+    console.log('Índice columna Utilización:', indiceUtilizacion);
+    if (indiceUtilizacion === -1) {
+        console.log('⚠️ COLUMNA "Utilización" NO ENCONTRADA. Buscando columnas similares...');
+        headers.forEach((h, idx) => {
+            if (h && h.toString().toLowerCase().includes('util')) {
+                console.log(`  Posible columna similar en índice ${idx}: "${h}"`);
+            }
+        });
+    }
     
     // Procesar cada fila (empezando desde la fila 1, ya que 0 son los headers)
     for (let i = 1; i < jsonData.length; i++) {
@@ -331,6 +349,15 @@ function procesarDatos(jsonData) {
         const mapping = MTO_MAPPING[creadoPor] || MTO_MAPPING['DEFAULT'];
         trabajo.tipoMantenimiento = mapping.id;
         trabajo.claseTipo = mapping.clase;
+        
+        // NUEVO: Detectar si requiere descargo (Utilización = YU1)
+        const utilizacion = indiceUtilizacion !== -1 ? String(row[indiceUtilizacion] || '').trim().toUpperCase() : '';
+        trabajo.requiereDescargo = (utilizacion === 'YU1');
+        
+        // DEBUG: Mostrar valores de Utilización en primeros trabajos
+        if (trabajos.length < 10 && indiceUtilizacion !== -1) {
+            console.log(`Trabajo ${trabajos.length + 1} - Utilización: "${row[indiceUtilizacion]}" -> "${utilizacion}" -> requiereDescargo: ${trabajo.requiereDescargo}`);
+        }
 
         // Añadir índice para referencia
         trabajo._indice = trabajos.length;
@@ -556,13 +583,24 @@ function mostrarTrabajos() {
             trabajoItem.classList.add(trabajo.claseTipo);
         }
         
+        // Añadir clase si requiere descargo
+        if (trabajo.requiereDescargo) {
+            trabajoItem.classList.add('requiere-descargo');
+        }
+        
         trabajoItem.draggable = true;
         trabajoItem.dataset.indice = trabajo._indice; // Usar el índice original del trabajo
         
         // Obtener texto breve y eliminar prefijo "HGPIe: " si existe
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${trabajo._indice + 1}`;
         textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
-        trabajoItem.textContent = textoBreve;
+        
+        // Añadir icono de descargo si aplica
+        if (trabajo.requiereDescargo) {
+            trabajoItem.innerHTML = `<span class="descargo-icon" title="Requiere acciones de aislamiento">🔒</span> ${textoBreve}`;
+        } else {
+            trabajoItem.textContent = textoBreve;
+        }
         
         // Eventos de drag
         trabajoItem.addEventListener('dragstart', handleDragStart);
@@ -1047,6 +1085,16 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         primeraLinea.appendChild(ordenContainer);
         primeraLinea.appendChild(solicitudContainer);
         
+        // NUEVO: Añadir icono de descargo si Utilización = YU1
+        if (trabajo.requiereDescargo) {
+            const descargoContainer = document.createElement('div');
+            descargoContainer.className = 'trabajo-descargo';
+            descargoContainer.textContent = '🔒 Descargo';
+            descargoContainer.title = 'Requiere acciones de aislamiento';
+            primeraLinea.appendChild(descargoContainer);
+            trabajoElement.classList.add('requiere-descargo');
+        }
+        
         // Crear contenedor para el texto (segunda línea)
         const textoContainer = document.createElement('div');
         textoContainer.className = 'trabajo-texto';
@@ -1358,6 +1406,7 @@ function obtenerDatosCompletos() {
     const headers = COLUMNAS_ESPERADAS.slice();
     headers.push('Actualizada fecha');
     headers.push('Estado permiso');
+    headers.push('Requiere Descargo');
     datosExportar.push(headers);
     
     // Procesar cada trabajo
@@ -1401,6 +1450,10 @@ function obtenerDatosCompletos() {
         const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
         fila.push(estadoPermiso);
         
+        // Añadir campo "Requiere Descargo" (Sí/No) basado en Utilización = YU1
+        const requiereDescargo = trabajo.requiereDescargo === true ? 'Sí' : 'No';
+        fila.push(requiereDescargo);
+        
         datosExportar.push(fila);
     });
     
@@ -1424,6 +1477,7 @@ function exportarExcel() {
         const colWidths = COLUMNAS_ESPERADAS.map(() => ({ wch: 15 }));
         colWidths.push({ wch: 15 }); // Para la columna "Actualizada fecha"
         colWidths.push({ wch: 15 }); // Para la columna "Estado permiso"
+        colWidths.push({ wch: 18 }); // Para la columna "Requiere Descargo"
         ws['!cols'] = colWidths;
         
         XLSX.utils.book_append_sheet(wb, ws, 'Trabajos con Fechas');
@@ -1901,6 +1955,7 @@ function generarListado() {
         html += '<th style="width: 100px;">Orden</th>';
         html += '<th style="width: 100px;">Solicitud</th>';
         html += '<th>Texto breve</th>';
+        html += '<th style="width: 80px; text-align: center;">Descargo</th>';
         html += '<th style="width: 80px; text-align: center;">Estado</th>';
         html += '</tr></thead>';
         html += '<tbody>';
@@ -1925,12 +1980,17 @@ function generarListado() {
             const claseEstado = esAutorizado ? 'autorizado' : 'solicitado';
             const iconoEstado = '✓';
             
+            // Icono de descargo (aislamiento)
+            const requiereDescargo = trabajo.requiereDescargo === true;
+            const iconoDescargo = requiereDescargo ? '<span class="descargo-badge" title="Requiere acciones de aislamiento">🔒</span>' : '';
+            
             html += '<tr>';
             html += `<td>${hora}</td>`;
             html += `<td><span class="departamento-badge ${claseTipo}">${departamentoLabel}</span></td>`;
             html += `<td>${orden}</td>`;
             html += `<td>${solicitud}</td>`;
             html += `<td>${textoBreve}</td>`;
+            html += `<td style="text-align: center;">${iconoDescargo}</td>`;
             html += `<td style="text-align: center;"><span class="estado-check ${claseEstado}">${iconoEstado}</span></td>`;
             html += '</tr>';
         });

@@ -258,6 +258,16 @@ body {
     transform: rotate(5deg);
 }
 
+/* Estilos para trabajos con descargo en la lista */
+.trabajo-item.requiere-descargo {
+    border-right: 4px solid #ff5722;
+}
+
+.trabajo-item .descargo-icon {
+    font-size: 0.9em;
+    margin-right: 3px;
+}
+
 .empty-message {
     color: #999;
     text-align: center;
@@ -629,6 +639,28 @@ body {
     font-size: 0.6em;
     opacity: 0.9;
     font-weight: 600;
+}
+
+/* Estilos para trabajos con Descargo (Utilización = YU3) */
+.trabajo-descargo {
+    font-size: 0.6em;
+    font-weight: 700;
+    background: #ff5722;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.trabajo-en-calendario.requiere-descargo {
+    border-right: 4px solid #ff5722;
+}
+
+.descargo-badge {
+    font-size: 1.1em;
+    display: inline-block;
 }
 
 .editor-hora {
