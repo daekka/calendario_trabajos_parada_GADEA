@@ -672,7 +672,7 @@ function mostrarTrabajos() {
         
         // Obtener texto breve y eliminar prefijo "HGPIe: " si existe
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${trabajo._indice + 1}`;
-        textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
+        //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
         
         // Añadir icono de descargo si aplica
         if (trabajo.requiereDescargo) {
@@ -1147,7 +1147,7 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         
         // Obtener texto breve y eliminar prefijo "HGPIe: " si existe
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
-        textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
+        //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
         
         // Obtener Orden y Solicitud
         const orden = trabajo['Orden'] || '';
@@ -1894,7 +1894,7 @@ function generarGantt() {
         
         // Obtener texto breve
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
-        textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
+        //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
         
         // Obtener estado del permiso
         const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
@@ -2084,7 +2084,7 @@ function generarListado() {
             const orden = trabajo['Orden'] || '';
             const solicitud = trabajo['Solicitud'] || '';
             let textoBreve = trabajo['Texto breve'] || '';
-            textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
+            //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
             
             // Estado del permiso
             const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
