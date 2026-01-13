@@ -208,14 +208,15 @@ function handleFileUpload(event) {
     reader.onload = function(e) {
         try {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd/mm/yyyy' });
+            // Leer Excel SIN convertir fechas (raw numbers) para manejar seriales de Excel manualmente
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
             
             // Leer la primera hoja
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             
-            // Convertir a JSON con fechas formateadas
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd/mm/yyyy' });
+            // Convertir a JSON manteniendo valores raw (números seriales de Excel para fechas)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: '' });
             
             if (jsonData.length < 2) {
                 alert('El archivo Excel está vacío o no tiene datos válidos');
@@ -290,13 +291,35 @@ function procesarDatos(jsonData) {
     
     const headers = jsonData[0];
     
+    // DEBUG: Mostrar todos los headers
+    console.log('=== HEADERS DEL EXCEL ===');
+    headers.forEach((h, idx) => {
+        console.log(`  Columna ${idx}: "${h}"`);
+    });
+    
     // Buscar índices de las columnas
     const indiceValidoDe = headers.findIndex(h => 
         h && h.toString().trim() === 'Válido de'
     );
+    const indiceHoraInicio = headers.findIndex(h => 
+        h && h.toString().trim() === 'Hora inicio validez'
+    );
     const indiceStatusSistema = headers.findIndex(h => 
         h && h.toString().trim() === 'Status sistema'
     );
+    
+    console.log('Índice "Válido de":', indiceValidoDe);
+    console.log('Índice "Hora inicio validez":', indiceHoraInicio);
+    
+    // DEBUG: Mostrar valores de las primeras filas para esas columnas
+    if (jsonData.length > 1) {
+        console.log('=== VALORES DE HORA EN PRIMERAS FILAS ===');
+        for (let i = 1; i < Math.min(6, jsonData.length); i++) {
+            const row = jsonData[i];
+            console.log(`Fila ${i}: Válido de="${row[indiceValidoDe]}" (tipo: ${typeof row[indiceValidoDe]}), Hora="${row[indiceHoraInicio]}" (tipo: ${typeof row[indiceHoraInicio]})`);
+        }
+    }
+    
     // NUEVO: Buscar índice de Creado por
     const indiceCreadoPor = headers.findIndex(h => 
         h && h.toString().trim() === 'Creado por'
@@ -366,6 +389,15 @@ function procesarDatos(jsonData) {
         // Guardar valor original de "Válido de"
         const valorValidoDe = indiceValidoDe !== -1 ? (row[indiceValidoDe] || '') : '';
         valoresOriginalesValidoDe.set(trabajo._indice, valorValidoDe);
+        
+        // DEBUG: Mostrar información de fechas de primeros trabajos
+        if (trabajos.length <= 5) {
+            console.log(`=== DEPURACIÓN FECHA Trabajo ${trabajos.length} ===`);
+            console.log('  Valor original "Válido de":', valorValidoDe);
+            console.log('  Tipo de dato:', typeof valorValidoDe);
+            console.log('  Es Date?:', valorValidoDe instanceof Date);
+            console.log('  Normalizada:', normalizarFecha(valorValidoDe));
+        }
         
         // DEBUG: Mostrar primeros trabajos procesados
         if (trabajos.length <= 3) {
@@ -461,28 +493,52 @@ function normalizarFecha(fecha) {
         return fecha.split(' ')[0]; // Tomar solo la parte de la fecha si hay hora
     }
     
-    // Si es un objeto Date de Excel
+    // Si es un objeto Date (de Excel con cellDates: true)
     if (fecha instanceof Date) {
-        const ano = fecha.getFullYear();
-        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-        const dia = String(fecha.getDate()).padStart(2, '0');
+        // Usar UTC para evitar problemas de zona horaria
+        const ano = fecha.getUTCFullYear();
+        const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getUTCDate()).padStart(2, '0');
         return `${ano}-${mes}-${dia}`;
     }
     
-    // Si es un número (serial de Excel)
+    // Si es un número (serial de Excel) - CASO PRINCIPAL
     if (typeof fecha === 'number') {
-        // Excel cuenta los días desde el 1 de enero de 1900
-        const fechaExcel = new Date((fecha - 25569) * 86400 * 1000);
-        const ano = fechaExcel.getFullYear();
-        const mes = String(fechaExcel.getMonth() + 1).padStart(2, '0');
-        const dia = String(fechaExcel.getDate()).padStart(2, '0');
-        return `${ano}-${mes}-${dia}`;
+        // Los seriales de Excel para fechas típicamente son > 1 (días desde 1900)
+        // Si el número es muy pequeño (< 1), podría ser solo hora
+        if (fecha < 1) {
+            console.warn('Valor de fecha es solo hora (< 1):', fecha);
+            return null;
+        }
+        
+        // Convertir serial de Excel a fecha JavaScript
+        // Excel cuenta desde 1 de enero de 1900, pero tiene un bug con el año bisiesto 1900
+        // La fórmula: (serial - 25569) * 86400 * 1000 convierte a timestamp Unix
+        // 25569 = días entre 1/1/1900 y 1/1/1970 (epoch Unix)
+        const fechaExcel = new Date(Math.round((fecha - 25569) * 86400 * 1000));
+        const ano = fechaExcel.getUTCFullYear();
+        const mes = String(fechaExcel.getUTCMonth() + 1).padStart(2, '0');
+        const dia = String(fechaExcel.getUTCDate()).padStart(2, '0');
+        
+        // Validar que el año sea razonable (entre 2000 y 2100)
+        if (ano >= 2000 && ano <= 2100) {
+            return `${ano}-${mes}-${dia}`;
+        } else {
+            console.warn('Fecha fuera de rango razonable:', fecha, '->', `${ano}-${mes}-${dia}`);
+            return null;
+        }
     }
     
     // Intentar parsear como string
     if (typeof fecha === 'string') {
         // Limpiar el string
         fecha = fecha.trim();
+        
+        // Si parece ser solo hora (HH:MM:SS), ignorar
+        if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(fecha)) {
+            console.warn('Valor es solo hora, no fecha:', fecha);
+            return null;
+        }
         
         // Intentar diferentes formatos
         // YYYY-MM-DD
@@ -491,13 +547,13 @@ function normalizarFecha(fecha) {
             return `${match[1]}-${match[2]}-${match[3]}`;
         }
         
-        // DD/MM/YYYY
+        // DD/MM/YYYY (formato español)
         match = fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
         if (match) {
             return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
         }
         
-        // DD.MM.YYYY
+        // DD.MM.YYYY (formato alemán)
         match = fecha.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
         if (match) {
             return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
@@ -515,16 +571,39 @@ function normalizarFecha(fecha) {
             return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
         }
         
-        // Intentar parsear con Date
+        // MM/DD/YYYY (formato americano) - intentar detectar
+        match = fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+        if (match) {
+            const num1 = parseInt(match[1]);
+            const num2 = parseInt(match[2]);
+            let ano = match[3];
+            if (ano.length === 2) ano = '20' + ano;
+            
+            // Si el primer número > 12, es DD/MM/YYYY
+            if (num1 > 12) {
+                return `${ano}-${String(num2).padStart(2, '0')}-${String(num1).padStart(2, '0')}`;
+            }
+            // Si el segundo número > 12, es MM/DD/YYYY
+            else if (num2 > 12) {
+                return `${ano}-${String(num1).padStart(2, '0')}-${String(num2).padStart(2, '0')}`;
+            }
+            // Ambiguo - asumir DD/MM/YYYY (formato español)
+            else {
+                return `${ano}-${String(num2).padStart(2, '0')}-${String(num1).padStart(2, '0')}`;
+            }
+        }
+        
+        // Intentar parsear con Date como último recurso (usar UTC)
         const fechaParsed = new Date(fecha);
         if (!isNaN(fechaParsed.getTime())) {
-            const ano = fechaParsed.getFullYear();
-            const mes = String(fechaParsed.getMonth() + 1).padStart(2, '0');
-            const dia = String(fechaParsed.getDate()).padStart(2, '0');
+            const ano = fechaParsed.getUTCFullYear();
+            const mes = String(fechaParsed.getUTCMonth() + 1).padStart(2, '0');
+            const dia = String(fechaParsed.getUTCDate()).padStart(2, '0');
             return `${ano}-${mes}-${dia}`;
         }
     }
     
+    console.warn('No se pudo normalizar la fecha:', fecha, 'Tipo:', typeof fecha);
     return null;
 }
 
@@ -948,24 +1027,48 @@ function formatearFecha(ano, mes, dia) {
     return `${ano}-${mesStr}-${diaStr}`;
 }
 
-// Obtener hora de un trabajo (con valor por defecto si está vacío)
+// Obtener hora de un trabajo
 function obtenerHoraTrabajo(indice) {
     // Si hay una hora modificada, usar esa
     if (horasTrabajos.has(indice)) {
         return horasTrabajos.get(indice);
     }
     
-    // Si no, usar la hora del trabajo o 7:00 por defecto
+    // Usar la hora del trabajo directamente
     const trabajo = trabajos[indice];
     const hora = trabajo['Hora inicio validez'];
-    return (hora != null ? String(hora).trim() : '') || '07:00';
+    
+    // Si está vacío, devolver 00:00
+    if (hora === null || hora === undefined || hora === '') {
+        return '00:00';
+    }
+    
+    // Si es número (formato Excel), convertir
+    if (typeof hora === 'number') {
+        const totalMinutos = Math.round(hora * 24 * 60);
+        const h = Math.floor(totalMinutos / 60) % 24;
+        const m = totalMinutos % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    
+    // Si es string con formato H:MM:SS o HH:MM:SS, extraer solo HH:MM
+    const horaStr = String(hora).trim();
+    const match = horaStr.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (match) {
+        const h = parseInt(match[1]);
+        const m = parseInt(match[2]);
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    
+    return horaStr;
 }
 
 // Normalizar hora a formato HH:MM
 function normalizarHora(hora) {
-    if (!hora) return '07:00';
+    // Si es null, undefined o string vacío, devolver 00:00
+    if (hora === null || hora === undefined || hora === '') return '00:00';
     
-    // Si es un número decimal (formato Excel: 0.29166667 = 7:00)
+    // Si es un número (formato Excel: 0 = 00:00, 0.29166667 = 7:00)
     if (typeof hora === 'number') {
         // Excel almacena horas como fracción del día
         const totalMinutos = Math.round(hora * 24 * 60);
@@ -974,43 +1077,28 @@ function normalizarHora(hora) {
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     }
     
+    // Convertir a string
     const horaStr = String(hora).trim();
     
-    // Si parece un número decimal como string
-    if (/^0\.\d+$/.test(horaStr) || /^1\.0*$/.test(horaStr)) {
+    // Si es string vacío, devolver 00:00
+    if (horaStr === '') return '00:00';
+    
+    // Si es "0" como string, convertir a 00:00
+    if (horaStr === '0') return '00:00';
+    
+    // Si parece un número decimal como string (0.xxxxx)
+    if (/^[\d.]+$/.test(horaStr)) {
         const horaNum = parseFloat(horaStr);
-        const totalMinutos = Math.round(horaNum * 24 * 60);
-        const h = Math.floor(totalMinutos / 60) % 24;
-        const m = totalMinutos % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-    
-    // Si ya está en formato HH:MM (incluyendo HH:MM:SS)
-    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(horaStr)) {
-        const [h, m] = horaStr.split(':');
-        const hNum = parseInt(h);
-        const mNum = parseInt(m);
-        if (hNum >= 0 && hNum < 24 && mNum >= 0 && mNum < 60) {
-            return `${String(hNum).padStart(2, '0')}:${String(mNum).padStart(2, '0')}`;
+        if (!isNaN(horaNum)) {
+            const totalMinutos = Math.round(horaNum * 24 * 60);
+            const h = Math.floor(totalMinutos / 60) % 24;
+            const m = totalMinutos % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
     }
     
-    // Si es solo un número, asumir que son horas
-    if (/^\d+$/.test(horaStr)) {
-        const hNum = parseInt(horaStr);
-        if (hNum >= 0 && hNum < 24) {
-            return `${String(hNum).padStart(2, '0')}:00`;
-        }
-    }
-    
-    // Si es un objeto Date, extraer hora y minutos
-    if (hora instanceof Date) {
-        const h = hora.getHours();
-        const m = hora.getMinutes();
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-    
-    return '07:00'; // Valor por defecto
+    // Devolver como string directamente
+    return horaStr;
 }
 
 // Comparar horas para ordenar
@@ -1089,7 +1177,7 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         if (trabajo.requiereDescargo) {
             const descargoContainer = document.createElement('div');
             descargoContainer.className = 'trabajo-descargo';
-            descargoContainer.textContent = '🔒 Descargo';
+            descargoContainer.textContent = '🔒';
             descargoContainer.title = 'Requiere acciones de aislamiento';
             primeraLinea.appendChild(descargoContainer);
             trabajoElement.classList.add('requiere-descargo');
@@ -1417,25 +1505,49 @@ function obtenerDatosCompletos() {
         COLUMNAS_ESPERADAS.forEach((columna, colIndex) => {
             let valor = trabajo[columna] || '';
             
+            // Normalizar fechas a formato DD/MM/YYYY para exportación
+            if (columna === 'Válido de' || columna === 'Validez a' || columna === 'Fecha de creación') {
+                // Primero normalizar a YYYY-MM-DD, luego convertir a DD/MM/YYYY
+                const fechaNorm = normalizarFecha(valor);
+                if (fechaNorm) {
+                    const [ano, mes, dia] = fechaNorm.split('-');
+                    valor = `${dia}/${mes}/${ano}`;
+                }
+            }
+            
             // Si es la columna "Válido de", actualizar con la fecha asignada
             if (columna === 'Válido de') {
                 const fechaAsignada = obtenerFechaTrabajo(indice);
-                valor = fechaAsignada || valor; // Usar fecha asignada si existe, sino mantener original
+                if (fechaAsignada) {
+                    // fechaAsignada viene en formato YYYY-MM-DD, convertir a DD/MM/YYYY
+                    const partes = fechaAsignada.split('-');
+                    if (partes.length === 3) {
+                        valor = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    } else {
+                        valor = fechaAsignada;
+                    }
+                }
             }
             
             // Si es la columna "Hora inicio validez", usar la hora modificada si existe
             if (columna === 'Hora inicio validez') {
                 if (horasTrabajos.has(indice)) {
                     valor = horasTrabajos.get(indice);
-                } else if (!valor || String(valor).trim() === '') {
-                    valor = '07:00'; // Valor por defecto si está vacío
                 }
+                // Mantener valor original, sin forzar 07:00
             }
             
             // Si es la columna "Validez a", usar la fecha modificada si existe
             if (columna === 'Validez a') {
                 if (fechasFinTrabajos.has(indice)) {
-                    valor = fechasFinTrabajos.get(indice);
+                    const fechaFin = fechasFinTrabajos.get(indice);
+                    // Convertir de YYYY-MM-DD a DD/MM/YYYY
+                    const partes = fechaFin.split('-');
+                    if (partes.length === 3) {
+                        valor = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    } else {
+                        valor = fechaFin;
+                    }
                 }
             }
             
@@ -1893,8 +2005,8 @@ function generarListado() {
                 return;
             }
             
-            // Obtener hora y normalizarla
-            const horaRaw = horasTrabajos.get(indice) || trabajo['Hora inicio validez'] || '07:00';
+            // Obtener hora directamente (usar ?? para no perder 0:00:00)
+            const horaRaw = horasTrabajos.has(indice) ? horasTrabajos.get(indice) : trabajo['Hora inicio validez'];
             const hora = normalizarHora(horaRaw);
             
             trabajosFiltrados.push({
