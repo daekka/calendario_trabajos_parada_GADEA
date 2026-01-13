@@ -48,6 +48,7 @@ const fileInput = document.getElementById('fileInput');
 const exportBtn = document.getElementById('exportBtn');
 const uploadSupabaseBtn = document.getElementById('uploadSupabaseBtn');
 const readSupabaseBtn = document.getElementById('readSupabaseBtn');
+const infoDatosNube = document.getElementById('infoDatosNube');
 const trabajosList = document.getElementById('trabajosList');
 const calendarioContainer = document.getElementById('calendarioContainer');
 const fechaInicio = document.getElementById('fechaInicio');
@@ -178,6 +179,12 @@ function handleFileUpload(event) {
 
     const file = event.target.files[0];
     if (!file) return;
+
+    // Ocultar info de nube si subimos archivo local
+    if (infoDatosNube) {
+        infoDatosNube.style.display = 'none';
+        infoDatosNube.textContent = '';
+    }
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1439,8 +1446,16 @@ async function leerDatosSupabase(param) {
             return;
         }
 
-        const jsonData = data[0].data;
+        const record = data[0];
+        const jsonData = record.data;
         console.log("Datos recibidos de Supabase:", jsonData);
+
+        // Mostrar fecha de los datos
+        if (infoDatosNube) {
+            const fechaData = new Date(record.created_at).toLocaleString();
+            infoDatosNube.innerHTML = `☁️ Datos del: <strong>${fechaData}</strong>`;
+            infoDatosNube.style.display = 'inline-block';
+        }
         
         if (!Array.isArray(jsonData) || jsonData.length < 2) {
             if (!isAutoLoad) alert('Los datos descargados no tienen el formato correcto.');
