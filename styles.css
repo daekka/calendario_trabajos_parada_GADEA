@@ -394,7 +394,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0;
-    min-width: fit-content;
+    min-width: max-content;
     position: relative;
 }
 
@@ -445,7 +445,7 @@ body {
 
 .dias-semana {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, auto);
     gap: 4px;
     margin-bottom: 8px;
     position: -webkit-sticky;
@@ -473,12 +473,13 @@ body {
 
 .dias-mes {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, auto);
     gap: 4px;
 }
 
 .dia-calendario {
     min-height: 120px;
+    min-width: 150px;
     background: white;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
@@ -531,10 +532,8 @@ body {
     font-size: 0.99em;
     cursor: grab;
     transition: all 0.2s ease;
+    white-space: normal;
     word-wrap: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 50px;
     display: flex;
     flex-direction: column;
     gap: 2px;

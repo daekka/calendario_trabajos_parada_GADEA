@@ -17,15 +17,6 @@ const COLUMNAS_ESPERADAS = [
     'Utilización'
 ];
 
-// NUVEA CONSTANTE: Mapeo de Usuarios
-const MTO_MAPPING = {
-    'UF183530': { id: 'MTO_ELECTRICO', label: 'Mto. Eléctrico', clase: 'tipo-mto-electrico' },
-    'UF474650': { id: 'MTO_MECANICO', label: 'Mto. Mecánico', clase: 'tipo-mto-mecanico' },
-    'UF076560': { id: 'GE', label: 'GE', clase: 'tipo-ge' },
-    'UF775634': { id: 'MTO_IC', label: 'Mto. I&C', clase: 'tipo-mto-ic' },
-    'DEFAULT': { id: 'OTROS', label: 'OTROS', clase: 'tipo-otros' }
-};
-
 // Configuración de Supabase (URL y KEY en config.js)
 let supabaseClient = null;
 
@@ -76,6 +67,13 @@ if (readSupabaseBtn) readSupabaseBtn.addEventListener('click', leerDatosSupabase
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
 }
+
+// Debounce para resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(igualarAnchoDias, 200);
+});
 
 // Lógica Dropdown y Filtros
 if (dropdownBtn && dropdownMenu) {
@@ -797,6 +795,32 @@ function generarCalendario() {
         const tieneMesSiguiente = index < meses.length - 1;
         const mesCalendario = generarMesCalendario(ano, mes, diaInicio, diaFin, esPrimerMes, index, esUltimoMes, tieneMesAnterior, tieneMesSiguiente);
         calendarioContainer.appendChild(mesCalendario);
+    });
+    
+    // Igualar ancho de todos los días después de renderizar
+    setTimeout(igualarAnchoDias, 0);
+}
+
+// Función para igualar el ancho de todos los días del calendario
+function igualarAnchoDias() {
+    const diasCalendario = document.querySelectorAll('.dia-calendario');
+    const diasSemana = document.querySelectorAll('.dia-semana');
+    
+    if (diasCalendario.length === 0) return;
+    
+    // Usar ancho fijo de 275px para todos los días (compacto pero legible)
+    const anchoFijo = 295;
+    
+    // Aplicar el ancho fijo a todos los días del calendario
+    diasCalendario.forEach(dia => {
+        dia.style.minWidth = anchoFijo + 'px';
+        dia.style.width = anchoFijo + 'px';
+    });
+    
+    // Aplicar el mismo ancho a los encabezados de días de la semana
+    diasSemana.forEach(dia => {
+        dia.style.minWidth = anchoFijo + 'px';
+        dia.style.width = anchoFijo + 'px';
     });
 }
 
