@@ -732,6 +732,12 @@ function mostrarTrabajos() {
         const linkIconHtml = `<a href="${urlOrden}" target="_blank" rel="noopener noreferrer" class="orden-link" title="Abrir orden ${ordenParaUrl}">🔗</a>`;
         partesContenido.push(linkIconHtml);
 
+        // Añadir icono-link para la Solicitud
+        const solicitudParaUrlList = (trabajo['Solicitud'] || '').toString().padStart(12, '0');
+        const urlSolicitudList = construirUrlSolicitud(solicitudParaUrlList);
+        const linkSolicitudHtml = `<a href="${urlSolicitudList}" target="_blank" rel="noopener noreferrer" class="solicitud-link" title="Abrir solicitud ${solicitudParaUrlList}">📎</a>`;
+        partesContenido.push(linkSolicitudHtml);
+
         trabajoItem.innerHTML = partesContenido.join(' ');
         
         // Eventos de drag
@@ -1198,6 +1204,16 @@ function construirUrlOrden(orden) {
     return `${base}${params}${ordenPad}&sap-app-origin-hint=&sap-ui-technology=WDA`;
 }
 
+// Construir URL dinámica para una Solicitud (rellena con ceros a la izquierda si hace falta)
+function construirUrlSolicitud(solicitud) {
+    if (!solicitud) return '';
+    const solStr = String(solicitud).trim();
+    const solPad = solStr.padStart(12, '0');
+    const base = 'https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html';
+    const params = '?sap-client=300&sap-language=ES#GadeaWCM-openWCTL?WCSWAPI-WAPINR=';
+    return `${base}${params}${solPad}&sap-app-origin-hint=&sap-ui-technology=GUI`;
+}
+
 // Comparar horas para ordenar
 function compararHoras(hora1, hora2) {
     const [h1, m1] = hora1.split(':').map(Number);
@@ -1308,7 +1324,14 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         linkOrdenContainer.className = 'trabajo-orden-link';
         linkOrdenContainer.innerHTML = `<a href="${urlOrdenCal}" target="_blank" rel="noopener noreferrer" title="Abrir orden ${ordenParaUrlCal}">🔗</a>`;
         primeraLinea.appendChild(linkOrdenContainer);
+        // Añadir Solicitud y su icono-link en orden: número de solicitud + icono
         primeraLinea.appendChild(solicitudContainer);
+        const solicitudParaUrlCal = (solicitud || '').toString().padStart(12, '0');
+        const urlSolicitudCal = construirUrlSolicitud(solicitudParaUrlCal);
+        const linkSolicitudCal = document.createElement('div');
+        linkSolicitudCal.className = 'trabajo-solicitud-link';
+        linkSolicitudCal.innerHTML = `<a href="${urlSolicitudCal}" target="_blank" rel="noopener noreferrer" title="Abrir solicitud ${solicitudParaUrlCal}">📎</a>`;
+        primeraLinea.appendChild(linkSolicitudCal);
         
         // NUEVO: Añadir icono de descargo si Utilización = YU1
         if (trabajo.requiereDescargo) {
