@@ -10,7 +10,7 @@ let estadosPermisos = new Map(); // Map: índice -> estado (string) para almacen
 
 // Nombres de columnas esperadas
 const COLUMNAS_ESPERADAS = [
-    'Orden', 'Solicitud', 'Tp.doc.descargo', 'Texto breve', 'Status sistema',
+    'Orden', 'Solicitud', 'Tp.doc.descargo', 'Texto breve', 'Status de usuario',
     'Permisos', 'Documento', 'Texto explicativo', 'Interlocutor', 'Catálogo',
     'Creado por', 'Fecha de creación', 'Ubicación técnica', 'Equipo',
     'Texto explicativo', 'Válido de', 'Hora inicio validez', 'Validez a', 'Hora fin de validez',
@@ -341,8 +341,8 @@ function procesarDatos(jsonData) {
     const indiceHoraInicio = headers.findIndex(h => 
         h && h.toString().trim() === 'Hora inicio validez'
     );
-    const indiceStatusSistema = headers.findIndex(h => 
-        h && h.toString().trim() === 'Status sistema'
+    const indiceStatusUsuario = headers.findIndex(h => 
+        h && h.toString().trim() === 'Status de usuario'
     );
     
     console.log('Índice "Válido de":', indiceValidoDe);
@@ -448,14 +448,18 @@ function procesarDatos(jsonData) {
             });
         }
         
-        // Cargar estado desde Status sistema
-        if (indiceStatusSistema !== -1 && row[indiceStatusSistema]) {
-            const status = String(row[indiceStatusSistema] || '').trim().toUpperCase();
-            if (status.includes('CREA')) {
-                estadosPermisos.set(trabajo._indice, 'SOLICITADO');
-            } else if (status.includes('PREP')) {
+        // Cargar estado desde Status de usuario
+        if (indiceStatusUsuario !== -1) {
+            const status = String(row[indiceStatusUsuario] || '').trim().toUpperCase();
+            if (status === 'AUTO') {
                 estadosPermisos.set(trabajo._indice, 'AUTORIZADO');
+            } else if (status === 'APRO') {
+                estadosPermisos.set(trabajo._indice, 'APROBADO');
+            } else {
+                estadosPermisos.set(trabajo._indice, 'PENDIENTE');
             }
+        } else {
+            estadosPermisos.set(trabajo._indice, 'PENDIENTE');
         }
     }
 }
@@ -1373,9 +1377,15 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         trabajoElement.addEventListener('dragend', handleDragEnd);
         
         // Aplicar color según el estado del permiso
-        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+        const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
         trabajoElement.dataset.estado = estadoPermiso;
-        trabajoElement.classList.add(`estado-${estadoPermiso.toLowerCase()}`);
+        if (estadoPermiso === 'AUTORIZADO') {
+            trabajoElement.classList.add('estado-autorizado');
+        } else if (estadoPermiso === 'APROBADO') {
+            trabajoElement.classList.add('estado-aprobado');
+        } else {
+            trabajoElement.classList.add('estado-pendiente');
+        }
         
         // Evento de clic derecho para editar hora, fecha de finalización y estado del permiso
         trabajoElement.addEventListener('contextmenu', (e) => {
@@ -1735,7 +1745,7 @@ function obtenerDatosCompletos() {
         fila.push(actualizadaFecha);
         
         // Añadir campo "Estado permiso"
-        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
+        const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
         fila.push(estadoPermiso);
         
         // Añadir campo "Requiere Descargo" (Sí/No) basado en Utilización = YU1
@@ -2073,8 +2083,13 @@ function generarGantt() {
         //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
         
         // Obtener estado del permiso
-        const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
-        const claseEstado = `estado-${estadoPermiso.toLowerCase()}`;
+        const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
+        let claseEstado = 'estado-pendiente';
+        if (estadoPermiso === 'AUTORIZADO') {
+            claseEstado = 'estado-autorizado';
+        } else if (estadoPermiso === 'APROBADO') {
+            claseEstado = 'estado-aprobado';
+        }
         
         html += '<div class="gantt-row">';
         html += '<div class="gantt-row-label">';
@@ -2263,10 +2278,16 @@ function generarListado() {
             //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
             
             // Estado del permiso
-            const estadoPermiso = estadosPermisos.get(indice) || 'SOLICITADO';
-            const esAutorizado = estadoPermiso === 'AUTORIZADO';
-            const claseEstado = esAutorizado ? 'autorizado' : 'solicitado';
-            const iconoEstado = '✓';
+            const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
+            let claseEstado = 'pendiente';
+            let iconoEstado = '⏳';
+            if (estadoPermiso === 'AUTORIZADO') {
+                claseEstado = 'autorizado';
+                iconoEstado = '✓';
+            } else if (estadoPermiso === 'APROBADO') {
+                claseEstado = 'aprobado';
+                iconoEstado = '🟧';
+            }
             
             // Icono de descargo (aislamiento)
             const requiereDescargo = trabajo.requiereDescargo === true;
