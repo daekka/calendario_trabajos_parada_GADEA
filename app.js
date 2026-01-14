@@ -1324,6 +1324,22 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         const textoContainer = document.createElement('div');
         textoContainer.className = 'trabajo-texto';
         textoContainer.textContent = textoBreve;
+        textoContainer.title = 'Clic para copiar texto del trabajo';
+        textoContainer.style.cursor = 'pointer';
+        textoContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (textoBreve) {
+                navigator.clipboard.writeText(textoBreve).then(() => {
+                    const textoOriginal = textoContainer.textContent;
+                    textoContainer.textContent = '✅ Copiado!';
+                    setTimeout(() => {
+                        textoContainer.textContent = textoOriginal;
+                    }, 1000);
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                });
+            }
+        });
         
         trabajoElement.appendChild(primeraLinea);
         trabajoElement.appendChild(textoContainer);
