@@ -157,6 +157,41 @@ body {
     margin-right: 8px;
 }
 
+/* Colores de leyenda para el dropdown de filtros */
+.dropdown-item.filtro-mto-electrico {
+    background-color: #90caf9;
+}
+.dropdown-item.filtro-mto-electrico:hover {
+    background-color: #64b5f6;
+}
+
+.dropdown-item.filtro-mto-mecanico {
+    background-color: #f48fb1;
+}
+.dropdown-item.filtro-mto-mecanico:hover {
+    background-color: #f06292;
+}
+
+.dropdown-item.filtro-ge {
+    background-color: #a5d6a7;
+}
+.dropdown-item.filtro-ge:hover {
+    background-color: #81c784;
+}
+
+.dropdown-item.filtro-mto-ic {
+    background-color: #ffe082;
+}
+.dropdown-item.filtro-mto-ic:hover {
+    background-color: #ffd54f;
+}
+
+.dropdown-item.filtro-otros {
+    background-color: #eeeeee;
+}
+.dropdown-item.filtro-otros:hover {
+    background-color: #e0e0e0;
+}
 
 .file-input-label input[type="file"] {
     display: none;
@@ -497,6 +532,11 @@ body {
     background-color: #fffde7; /* Yellow background */
     border-color: #ffd600; /* Yellow border */
     border-width: 2px;
+}
+
+.dia-calendario.dia-pasado {
+    background-color: #f0f0f0; /* Gris claro para días pasados */
+    opacity: 0.7;
 }
 
 .dia-calendario.drag-over {

@@ -983,8 +983,15 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
         diaElement.className = 'dia-calendario';
         
         const fechaStr = formatearFecha(ano, mes, dia);
+        const fechaDia = new Date(ano, mes, dia);
+        fechaDia.setHours(0, 0, 0, 0);
+        const hoyNormalizado = new Date(hoy);
+        hoyNormalizado.setHours(0, 0, 0, 0);
+        
         if (fechaStr === hoyStr) {
             diaElement.classList.add('dia-actual');
+        } else if (fechaDia < hoyNormalizado) {
+            diaElement.classList.add('dia-pasado');
         }
         diaElement.dataset.fecha = fechaStr;
         
