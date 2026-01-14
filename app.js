@@ -66,6 +66,11 @@ let filtroTextoValor = 'HGPI';
 const filtroTextoActivoCheckbox = document.getElementById('filtroTextoActivo');
 const filtroTextoInput = document.getElementById('filtroTextoInput');
 
+// Referencias para toggle de sección trabajos
+const trabajosSection = document.getElementById('trabajosSection');
+const trabajosContent = document.getElementById('trabajosContent');
+const toggleTrabajosBtn = document.getElementById('toggleTrabajosBtn');
+
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
@@ -84,6 +89,17 @@ if (filtroTextoInput) {
     filtroTextoInput.addEventListener('input', (e) => {
         filtroTextoValor = e.target.value;
         mostrarTrabajos();
+    });
+}
+
+// Event listener para toggle de sección trabajos
+if (toggleTrabajosBtn) {
+    const mainContent = document.querySelector('.main-content');
+    toggleTrabajosBtn.addEventListener('click', () => {
+        const isCollapsed = trabajosSection.classList.toggle('collapsed');
+        mainContent.classList.toggle('trabajos-collapsed', isCollapsed);
+        toggleTrabajosBtn.textContent = isCollapsed ? '▶' : '◀';
+        toggleTrabajosBtn.title = isCollapsed ? 'Mostrar trabajos' : 'Ocultar trabajos';
     });
 }
 

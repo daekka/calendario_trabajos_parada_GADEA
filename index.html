@@ -55,9 +55,13 @@
         </div>
 
         <div class="main-content">
-            <div class="trabajos-section">
-                <h2>Trabajos</h2>
-                <div class="filtro-texto-container">
+            <div class="trabajos-section" id="trabajosSection">
+                <div class="trabajos-header">
+                    <h2>Trabajos</h2>
+                    <button id="toggleTrabajosBtn" class="toggle-trabajos-btn" title="Ocultar/Mostrar trabajos">◀</button>
+                </div>
+                <div class="trabajos-content" id="trabajosContent">
+                    <div class="filtro-texto-container">
                     <label class="filtro-texto-label">
                         <input type="checkbox" id="filtroTextoActivo" checked>
                         <span>Filtrar por texto:</span>
@@ -66,6 +70,7 @@
                 </div>
                 <div id="trabajosList" class="trabajos-list">
                     <p class="empty-message">Carga un archivo Excel para comenzar</p>
+                </div>
                 </div>
             </div>
 
