@@ -1270,9 +1270,12 @@ body {
 .departamento-badge {
     display: inline-block;
     padding: 4px 10px;
-    border-radius: 12px;
+    border-radius: 0px;
     font-size: 12px;
     font-weight: 500;
+    width: 120px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .departamento-badge.tipo-mto-electrico {

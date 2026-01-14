@@ -2256,7 +2256,7 @@ function generarListado() {
         html += '<table class="listado-table">';
         html += '<thead><tr>';
         html += '<th style="width: 60px;">Hora</th>';
-        html += '<th style="width: 120px;">Departamento</th>';
+        html += '<th style="width: 150px;">Departamento</th>';
         html += '<th style="width: 100px;">Orden</th>';
         html += '<th style="width: 100px;">Solicitud</th>';
         html += '<th>Texto breve</th>';
