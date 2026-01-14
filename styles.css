@@ -398,12 +398,12 @@ body {
     cursor: grab;
     transition: all 0.2s ease;
     user-select: none;
-    font-size: 0.9em;
+    font-size: 0.75em;
 }
 
 .trabajo-item:hover {
     border-color: #667eea;
-    transform: translateX(5px);
+    transform: translateX(0px);
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
@@ -519,8 +519,31 @@ body {
     color: #9FA8DA; /* Azul suave - Solicitado */
 }
 
+.estadistica-item.estado-autorizado {
+    background: #28a745; /* Verde - mismo color que estado-autorizado en calendario */
+}
+
+.estadistica-item.estado-autorizado .estadistica-label,
 .estadistica-item.estado-autorizado .estadistica-valor {
-    color: #28a745; /* Verde - mismo color que estado-autorizado en calendario */
+    color: white;
+}
+
+.estadistica-item.estado-aprobado {
+    background: orange; /* Naranja - mismo color que estado-aprobado en calendario */
+}
+
+.estadistica-item.estado-aprobado .estadistica-label,
+.estadistica-item.estado-aprobado .estadistica-valor {
+    color: white;
+}
+
+.estadistica-item.estado-pendiente {
+    background: #bdbdbd; /* Gris - mismo color que estado-pendiente en calendario */
+}
+
+.estadistica-item.estado-pendiente .estadistica-label,
+.estadistica-item.estado-pendiente .estadistica-valor {
+    color: white;
 }
 
 .estadistica-texto {

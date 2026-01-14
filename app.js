@@ -906,9 +906,9 @@ function actualizarEstadisticasTrabajos() {
     if (!estadisticasContainer) return;
     
     // Contar trabajos por estado
-    let totalTrabajos = 0;
-    let solicitados = 0;
     let autorizados = 0;
+    let aprobados = 0;
+    let pendientes = 0;
     
     // Contar solo trabajos asignados al calendario
     trabajosAsignados.forEach(indice => {
@@ -918,16 +918,18 @@ function actualizarEstadisticasTrabajos() {
             return;
         }
 
-        totalTrabajos++;
-        const estado = estadosPermisos.get(indice) || 'SOLICITADO';
-        if (estado === 'SOLICITADO') {
-            solicitados++;
-        } else if (estado === 'AUTORIZADO') {
+        const estado = estadosPermisos.get(indice) || 'PENDIENTE';
+        if (estado === 'AUTORIZADO') {
             autorizados++;
+        } else if (estado === 'APROBADO') {
+            aprobados++;
+        } else {
+            pendientes++;
         }
     });
     
     // Si no hay trabajos asignados, mostrar mensaje
+    const totalTrabajos = autorizados + aprobados + pendientes;
     if (totalTrabajos === 0) {
         estadisticasContainer.innerHTML = '<span class="estadistica-texto">Sin trabajos asignados</span>';
         return;
@@ -935,17 +937,17 @@ function actualizarEstadisticasTrabajos() {
     
     // Crear HTML de estadísticas
     estadisticasContainer.innerHTML = `
-        <div class="estadistica-item">
-            <span class="estadistica-label">Total:</span>
-            <span class="estadistica-valor">${totalTrabajos}</span>
-        </div>
-        <div class="estadistica-item estado-solicitado">
-            <span class="estadistica-label">Solicitados:</span>
-            <span class="estadistica-valor">${solicitados}</span>
-        </div>
-        <div class="estadistica-item estado-autorizado">
+        <div class="estadistica-item estado-autorizado" title="Permiso de trabajo aprobado con todas las firmas">
             <span class="estadistica-label">Autorizados:</span>
             <span class="estadistica-valor">${autorizados}</span>
+        </div>
+        <div class="estadistica-item estado-aprobado" title="Permiso de trabajo aprobado pendiente de alguna firma">
+            <span class="estadistica-label">Aprobados:</span>
+            <span class="estadistica-valor">${aprobados}</span>
+        </div>
+        <div class="estadistica-item estado-pendiente" title="Permiso de trabajo pendiente">
+            <span class="estadistica-label">Pendientes:</span>
+            <span class="estadistica-valor">${pendientes}</span>
         </div>
     `;
 }
