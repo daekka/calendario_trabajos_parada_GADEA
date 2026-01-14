@@ -980,7 +980,7 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
     if (esPrimerMes) {
         const diasSemana = document.createElement('div');
         diasSemana.className = 'dias-semana';
-        const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const nombresDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
         nombresDias.forEach(dia => {
             const diaSemana = document.createElement('div');
             diaSemana.className = 'dia-semana';
@@ -1069,8 +1069,8 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
         const numeroDia = document.createElement('div');
         numeroDia.className = 'numero-dia';
         // Mostrar día/mes en formato "16/Ene" (mes en texto)
-        const nombresMesesAbrev = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        numeroDia.textContent = `${dia}/${nombresMesesAbrev[mes]}`;
+        const nombresMesesAbrev = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre   '];
+        numeroDia.textContent = `${dia} de ${nombresMesesAbrev[mes]} de ${ano}`;
         diaElement.appendChild(numeroDia);
         
         // Contenedor para trabajos del día
