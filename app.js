@@ -719,12 +719,20 @@ function mostrarTrabajos() {
         let textoBreve = trabajo['Texto breve'] || `Trabajo ${trabajo._indice + 1}`;
         //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, ''); // Eliminar prefijo (case insensitive)
         
-        // Añadir icono de descargo si aplica
+        // Añadir icono de descargo si aplica y crear contenido principal
+        const partesContenido = [];
         if (trabajo.requiereDescargo) {
-            trabajoItem.innerHTML = `<span class="descargo-icon" title="Requiere acciones de aislamiento">🔒</span> ${textoBreve}`;
-        } else {
-            trabajoItem.textContent = textoBreve;
+            partesContenido.push(`<span class="descargo-icon" title="Requiere acciones de aislamiento">🔒</span>`);
         }
+        partesContenido.push(`<span class="texto-breve">${textoBreve}</span>`);
+
+        // Añadir icono-link que abrirá la orden en una pestaña nueva
+        const ordenParaUrl = (trabajo['Orden'] || '').toString().padStart(12, '0');
+        const urlOrden = construirUrlOrden(ordenParaUrl);
+        const linkIconHtml = `<a href="${urlOrden}" target="_blank" rel="noopener noreferrer" class="orden-link" title="Abrir orden ${ordenParaUrl}">🔗</a>`;
+        partesContenido.push(linkIconHtml);
+
+        trabajoItem.innerHTML = partesContenido.join(' ');
         
         // Eventos de drag
         trabajoItem.addEventListener('dragstart', handleDragStart);
@@ -1179,6 +1187,17 @@ function normalizarHora(hora) {
     return horaStr;
 }
 
+// Construir URL dinámica para una Orden (rellena con ceros a la izquierda si hace falta)
+function construirUrlOrden(orden) {
+    if (!orden) return '';
+    // Asegurar que orden sea string y tenga al menos 12 caracteres con ceros a la izquierda
+    const ordenStr = String(orden).trim();
+    const ordenPad = ordenStr.padStart(12, '0');
+    const base = 'https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html';
+    const params = '?sap-client=300&sap-language=ES#MaintenanceOrder-display?AUFNR=';
+    return `${base}${params}${ordenPad}&sap-app-origin-hint=&sap-ui-technology=WDA`;
+}
+
 // Comparar horas para ordenar
 function compararHoras(hora1, hora2) {
     const [h1, m1] = hora1.split(':').map(Number);
@@ -1282,6 +1301,13 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         
         primeraLinea.appendChild(horaContainer);
         primeraLinea.appendChild(ordenContainer);
+        // Añadir icono-link para abrir la orden en una nueva pestaña
+        const ordenParaUrlCal = (orden || '').toString().padStart(12, '0');
+        const urlOrdenCal = construirUrlOrden(ordenParaUrlCal);
+        const linkOrdenContainer = document.createElement('div');
+        linkOrdenContainer.className = 'trabajo-orden-link';
+        linkOrdenContainer.innerHTML = `<a href="${urlOrdenCal}" target="_blank" rel="noopener noreferrer" title="Abrir orden ${ordenParaUrlCal}">🔗</a>`;
+        primeraLinea.appendChild(linkOrdenContainer);
         primeraLinea.appendChild(solicitudContainer);
         
         // NUEVO: Añadir icono de descargo si Utilización = YU1
