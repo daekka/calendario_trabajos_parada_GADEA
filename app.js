@@ -1242,10 +1242,43 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         const ordenContainer = document.createElement('div');
         ordenContainer.className = 'trabajo-orden';
         ordenContainer.textContent = `📋 ${orden}`;
+        ordenContainer.title = 'Clic para copiar número de orden';
+        ordenContainer.style.cursor = 'pointer';
+        ordenContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (orden) {
+                navigator.clipboard.writeText(orden).then(() => {
+                    const textoOriginal = ordenContainer.textContent;
+                    ordenContainer.textContent = '✅ Copiado!';
+                    setTimeout(() => {
+                        ordenContainer.textContent = textoOriginal;
+                    }, 1000);
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                });
+            }
+        });
         
         const solicitudContainer = document.createElement('div');
         solicitudContainer.className = 'trabajo-solicitud';
         solicitudContainer.textContent = `📄 ${solicitud}`;
+        solicitudContainer.title = 'Clic para copiar número de solicitud';
+        solicitudContainer.style.cursor = 'pointer';
+        solicitudContainer.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar que se propague al contenedor padre
+            if (solicitud) {
+                navigator.clipboard.writeText(solicitud).then(() => {
+                    // Feedback visual temporal
+                    const textoOriginal = solicitudContainer.textContent;
+                    solicitudContainer.textContent = '✅ Copiado!';
+                    setTimeout(() => {
+                        solicitudContainer.textContent = textoOriginal;
+                    }, 1000);
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                });
+            }
+        });
         
         primeraLinea.appendChild(horaContainer);
         primeraLinea.appendChild(ordenContainer);
