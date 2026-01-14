@@ -58,11 +58,34 @@ const imprimirListadoBtn = document.getElementById('imprimirListadoBtn');
 // NUEVO ESTADO GLOBAL
 let filtroTipos = new Set(['TODOS']);
 
+// Estado del filtro de texto
+let filtroTextoActivo = true;
+let filtroTextoValor = 'HGPI';
+
+// Referencias filtro texto
+const filtroTextoActivoCheckbox = document.getElementById('filtroTextoActivo');
+const filtroTextoInput = document.getElementById('filtroTextoInput');
+
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
 if (uploadSupabaseBtn) uploadSupabaseBtn.addEventListener('click', subirDatosSupabase);
 if (readSupabaseBtn) readSupabaseBtn.addEventListener('click', leerDatosSupabase);
+
+// Event listeners para filtro de texto
+if (filtroTextoActivoCheckbox) {
+    filtroTextoActivoCheckbox.addEventListener('change', (e) => {
+        filtroTextoActivo = e.target.checked;
+        filtroTextoInput.disabled = !filtroTextoActivo;
+        mostrarTrabajos();
+    });
+}
+if (filtroTextoInput) {
+    filtroTextoInput.addEventListener('input', (e) => {
+        filtroTextoValor = e.target.value;
+        mostrarTrabajos();
+    });
+}
 
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
@@ -626,14 +649,22 @@ function mostrarTrabajos() {
         return;
     }
     
-    // Filtrar trabajos: solo mostrar los que NO han sido asignados y cumplen filtro de tipo
+    // Filtrar trabajos: solo mostrar los que NO han sido asignados y cumplen filtro de tipo y texto
     const trabajosFiltrados = trabajos.filter((trabajo, index) => {
         const noAsignado = !trabajosAsignados.has(trabajo._indice);
         
         // Filtro por tipo de mantenimiento
-        const cumpleFiltro = filtroTipos.has('TODOS') || filtroTipos.has(trabajo.tipoMantenimiento);
+        const cumpleFiltroTipo = filtroTipos.has('TODOS') || filtroTipos.has(trabajo.tipoMantenimiento);
         
-        return noAsignado && cumpleFiltro;
+        // Filtro por texto en "Texto breve"
+        let cumpleFiltroTexto = true;
+        if (filtroTextoActivo && filtroTextoValor.trim() !== '') {
+            const textoBreve = (trabajo['Texto breve'] || '').toLowerCase();
+            const textoBuscar = filtroTextoValor.toLowerCase();
+            cumpleFiltroTexto = textoBreve.includes(textoBuscar);
+        }
+        
+        return noAsignado && cumpleFiltroTipo && cumpleFiltroTexto;
     });
     
     // Mostrar contador de trabajos restantes
