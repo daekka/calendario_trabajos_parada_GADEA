@@ -1441,3 +1441,93 @@ body {
         page-break-inside: avoid !important;
     }
 }
+
+/* Modal detalles styles */
+.modal-overlay {
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+}
+
+.modal-detalles {
+    background: #fff;
+    padding: 16px;
+    border-radius: 10px;
+    width: 420px;
+    max-width: 100%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #222;
+}
+
+.modal-detalles h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.modal-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.modal-row .modal-label {
+    flex: 1;
+    font-size: 13px;
+}
+
+.modal-row .modal-value {
+    margin-top: 6px;
+    word-break: break-word;
+    font-size: 14px;
+    color: #111;
+    background: #f7f7f7;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #e9e9e9;
+}
+
+.modal-actions {
+    text-align: right;
+    margin-top: 6px;
+}
+
+.modal-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.modal-btn-copy {
+    background: linear-gradient(90deg,#667eea,#764ba2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102,126,234,0.18);
+}
+.modal-btn-copy:hover { transform: translateY(-2px); }
+
+.modal-btn-close {
+    background: #f1f1f1;
+    color: #333;
+    margin-left: 8px;
+}
+.modal-btn-close:hover { background: #e0e0e0; }
+
+.modal-small-btn {
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}

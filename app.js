@@ -1562,50 +1562,33 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
     const cympArray = calcularCyMPParaTrabajo(indice);
     const cympStr = (cympArray && cympArray.length > 0) ? cympArray.join(', ') : '';
 
-    // Crear modal
+    // Crear modal (markup con clases para estilos desde styles.css)
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.right = '0';
-    overlay.style.bottom = '0';
-    overlay.style.background = 'rgba(0,0,0,0.4)';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '9999';
 
     const modal = document.createElement('div');
     modal.className = 'modal-detalles';
-    modal.style.background = '#fff';
-    modal.style.padding = '18px';
-    modal.style.borderRadius = '8px';
-    modal.style.width = '420px';
-    modal.style.maxWidth = '90%';
-    modal.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)';
-    modal.style.fontFamily = 'system-ui, Arial, sans-serif';
 
     modal.innerHTML = `
-        <h3 style="margin:0 0 12px 0; font-size:16px;">Detalles del trabajo</h3>
-        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-            <div style="flex:1;"><strong>Orden:</strong><div id="modal-orden" style="margin-top:6px; word-break:break-all;">${orden}</div></div>
-            <button id="btn-copiar-orden" style="padding:6px 10px;">Copiar</button>
+        <h3>Detalles del trabajo</h3>
+        <div class="modal-row">
+            <div class="modal-label"><strong>Orden:</strong><div id="modal-orden" class="modal-value">${orden}</div></div>
+            <button id="btn-copiar-orden" class="modal-btn modal-btn-copy modal-small-btn">Copiar</button>
         </div>
-        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-            <div style="flex:1;"><strong>Solicitud:</strong><div id="modal-solicitud" style="margin-top:6px; word-break:break-all;">${solicitud}</div></div>
-            <button id="btn-copiar-solicitud" style="padding:6px 10px;">Copiar</button>
+        <div class="modal-row">
+            <div class="modal-label"><strong>Solicitud:</strong><div id="modal-solicitud" class="modal-value">${solicitud}</div></div>
+            <button id="btn-copiar-solicitud" class="modal-btn modal-btn-copy modal-small-btn">Copiar</button>
         </div>
-        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-            <div style="flex:1;"><strong>CyMP:</strong><div id="modal-cymp" style="margin-top:6px; word-break:break-all;">${cympStr}</div></div>
-            <button id="btn-copiar-cymp" style="padding:6px 10px;">Copiar</button>
+        <div class="modal-row">
+            <div class="modal-label"><strong>CyMP:</strong><div id="modal-cymp" class="modal-value">${cympStr}</div></div>
+            <button id="btn-copiar-cymp" class="modal-btn modal-btn-copy modal-small-btn">Copiar</button>
         </div>
-        <div style="margin-bottom:14px; display:flex; align-items:flex-start; gap:8px;">
-            <div style="flex:1;"><strong>Texto breve:</strong><div id="modal-texto" style="margin-top:6px; white-space:pre-wrap;">${textoBreve}</div></div>
-            <button id="btn-copiar-texto" style="padding:6px 10px; height:40px;">Copiar</button>
+        <div class="modal-row">
+            <div class="modal-label"><strong>Texto breve:</strong><div id="modal-texto" class="modal-value">${textoBreve}</div></div>
+            <button id="btn-copiar-texto" class="modal-btn modal-btn-copy" style="height:40px;">Copiar</button>
         </div>
-        <div style="text-align:right; margin-top:6px;">
-            <button id="btn-cerrar-modal" style="padding:8px 12px;">Cerrar</button>
+        <div class="modal-actions">
+            <button id="btn-cerrar-modal" class="modal-btn modal-btn-close">Cerrar</button>
         </div>
     `;
 
@@ -1639,6 +1622,8 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
 
     const cerrar = () => {
         if (overlay && overlay.parentElement) document.body.removeChild(overlay);
+        // quitar listener de teclado
+        document.removeEventListener('keydown', onKeyDownClose);
     };
 
     btnCerrar.addEventListener('click', (e) => { e.stopPropagation(); cerrar(); });
@@ -1650,6 +1635,14 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
 
     // Evitar propagación del click dentro del modal para no cerrar
     modal.addEventListener('click', (e) => { e.stopPropagation(); });
+
+    // Cerrar con tecla Escape
+    function onKeyDownClose(e) {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            cerrar();
+        }
+    }
+    document.addEventListener('keydown', onKeyDownClose);
 }
 
 // Manejar inicio de arrastre (desde el listado)
