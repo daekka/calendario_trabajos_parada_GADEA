@@ -1531,3 +1531,62 @@ body {
     border-radius: 6px;
     font-size: 12px;
 }
+
+/* Botones en la esquina superior derecha para Crear Aviso / Crear Permiso */
+.container {
+    position: relative; /* necesario para posicionamiento absoluto de los botones */
+}
+
+.top-right-actions {
+    position: absolute;
+    right: 18px;
+    top: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 1100;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(118,75,162,0.18);
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(118,75,162,0.22);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.action-btn.aviso-btn {
+    background: linear-gradient(90deg,#ff7043,#ff5722);
+}
+
+.action-btn.permiso-btn {
+    background: linear-gradient(90deg,#42a5f5,#1e88e5);
+}
+
+@media (max-width: 900px) {
+    .top-right-actions {
+        right: 12px;
+        top: 8px;
+        gap: 6px;
+    }
+
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
