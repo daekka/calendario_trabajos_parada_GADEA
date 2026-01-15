@@ -87,6 +87,30 @@ const trabajosSection = document.getElementById('trabajosSection');
 const trabajosContent = document.getElementById('trabajosContent');
 const toggleTrabajosBtn = document.getElementById('toggleTrabajosBtn');
 
+// Inicializar la sección 'trabajos' oculta al cargar la página
+(function initTrabajosCollapsed() {
+    if (!trabajosSection) return;
+
+    // Añadir clase que controla el estado collapsed
+    trabajosSection.classList.add('collapsed');
+
+    // También marcar el contenido si existe (por seguridad)
+    if (trabajosContent) {
+        trabajosContent.classList.add('collapsed');
+    }
+
+    // Añadir clase al main para mantener el layout consistente
+    const mainContentInit = document.querySelector('.main-content');
+    if (mainContentInit) mainContentInit.classList.add('trabajos-collapsed');
+
+    // Actualizar el texto y tooltip del botón toggle si existe
+    if (toggleTrabajosBtn) {
+        toggleTrabajosBtn.textContent = '▶';
+        toggleTrabajosBtn.title = 'Mostrar trabajos';
+        toggleTrabajosBtn.setAttribute('aria-expanded', 'false');
+    }
+})();
+
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
