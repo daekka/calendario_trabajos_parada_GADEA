@@ -1132,6 +1132,13 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
         const nombresMesesAbrev = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre   '];
         numeroDia.textContent = `${dia} de ${nombresMesesAbrev[mes]} de ${ano}`;
         diaElement.appendChild(numeroDia);
+        // Contenedor para estadísticas del día (Autorizados / Resto)
+        const estadisticaDia = document.createElement('div');
+        estadisticaDia.className = 'estadistica-dia';
+        estadisticaDia.style.cssText = 'display:flex; gap:10px; margin:6px 0 10px 0; font-size:13px; align-items:center;';
+        // Valores iniciales (se actualizarán en mostrarTrabajosEnDia)
+        estadisticaDia.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados"><strong>Autorizados:</strong> <span class="estadistica-valor">0</span></div><div class="estadistica-dia-item" title="Permisos no autorizados"> <strong>Resto:</strong> <span class="estadistica-valor">0</span></div>`;
+        diaElement.appendChild(estadisticaDia);
         
         // Contenedor para trabajos del día
         const trabajosDia = document.createElement('div');
@@ -1300,6 +1307,30 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
     contenedor.innerHTML = '';
     
     const indicesTrabajos = trabajosConFechas.get(fechaStr) || [];
+    // Calcular estadística por día: autorizados vs resto (respetando filtroTipos)
+    try {
+        const contenedorDia = contenedor.parentElement; // el "diaElement"
+        if (contenedorDia) {
+            const estadisticaDiv = contenedorDia.querySelector('.estadistica-dia');
+            if (estadisticaDiv) {
+                let autorizados = 0;
+                let total = 0;
+                indicesTrabajos.forEach(ind => {
+                    const trabajo = trabajos[ind];
+                    // respetar filtro de tipo
+                    if (!filtroTipos.has('TODOS') && !filtroTipos.has(trabajo.tipoMantenimiento)) return;
+                    total++;
+                    const estado = (estadosPermisos.get(ind) || 'PENDIENTE');
+                    if (estado === 'AUTORIZADO') autorizados++;
+                });
+                const resto = Math.max(0, total - autorizados);
+                // Actualizar HTML del bloque de estadísticas
+                estadisticaDiv.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados"><strong>Autorizados:</strong> <span class="estadistica-valor">${autorizados}</span></div><div class="estadistica-dia-item" title="Permisos no autorizados"> <strong>Resto:</strong> <span class="estadistica-valor">${resto}</span></div>`;
+            }
+        }
+    } catch (err) {
+        console.warn('Error actualizando estadística diaria:', err);
+    }
     
     // Ordenar trabajos por hora
     const trabajosConHora = indicesTrabajos.map(indice => {
