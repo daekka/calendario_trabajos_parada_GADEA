@@ -10,10 +10,6 @@
 </head>
 <body>
     <div class="container">
-        <div class="top-right-actions">
-            <a class="action-btn aviso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#MaintenanceNotification-create?sap-ui-tech-hint=WDA" target="_blank" rel="noopener noreferrer" title="Crear Aviso">🔔 Crear Aviso</a>
-            <a class="action-btn permiso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#GadeaWCM-openWCLO?sap-ui-tech-hint=GUI" target="_blank" rel="noopener noreferrer" title="Crear Permiso/CyMP">🛠️ Crear Permiso/CyMP</a>
-        </div>
         <div class="upload-section">
             <label for="fileInput" class="file-input-label">
                 <span>📁 Subir archivo Excel</span>
@@ -85,7 +81,11 @@
                         <button class="tab-button" data-tab="listado">📋 Listado</button>
                         <button class="tab-button" data-tab="gantt">📊 Gantt</button>
                     </div>
-                    <div id="estadisticasTrabajos" class="estadisticas-trabajos"></div>
+                        <div class="top-right-actions-inline">
+                            <a class="action-btn aviso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#MaintenanceNotification-create?sap-ui-tech-hint=WDA" target="_blank" rel="noopener noreferrer" title="Crear Aviso">🔔 Crear Aviso</a>
+                            <a class="action-btn permiso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#GadeaWCM-openWCLO?sap-ui-tech-hint=GUI" target="_blank" rel="noopener noreferrer" title="Crear Permiso/CyMP">🛠️ Crear Permiso/CyMP</a>
+                        </div>
+                        <div id="estadisticasTrabajos" class="estadisticas-trabajos"></div>
                 </div>
                 
                 <div class="tab-content active" id="calendarioTab">

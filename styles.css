@@ -1532,18 +1532,12 @@ body {
     font-size: 12px;
 }
 
-/* Botones en la esquina superior derecha para Crear Aviso / Crear Permiso */
-.container {
-    position: relative; /* necesario para posicionamiento absoluto de los botones */
-}
-
-.top-right-actions {
-    position: absolute;
-    right: 18px;
-    top: 12px;
+/* Botones alineados con las estadísticas en la misma fila */
+.top-right-actions-inline {
     display: flex;
     gap: 8px;
-    z-index: 1100;
+    align-items: center;
+    margin-left: auto; /* empuja las estadísticas hacia la derecha junto a este contenedor */
 }
 
 .action-btn {
@@ -1579,9 +1573,7 @@ body {
 }
 
 @media (max-width: 900px) {
-    .top-right-actions {
-        right: 12px;
-        top: 8px;
+    .top-right-actions-inline {
         gap: 6px;
     }
 
