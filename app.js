@@ -7,6 +7,10 @@ let valoresOriginalesValidoDe = new Map(); // Map: índice -> valor original de 
 let horasTrabajos = new Map(); // Map: índice -> hora (string) para almacenar horas modificadas
 let fechasFinTrabajos = new Map(); // Map: índice -> fecha fin (string) para almacenar fechas de finalización modificadas
 let estadosPermisos = new Map(); // Map: índice -> estado (string) para almacenar estados de permisos: 'SOLICITADO', 'EJECUTADO', 'CERRADO'
+// Map para almacenar solicitudes que empiezan por '4', agrupadas por Texto breve (normalizado)
+let solicitudes4PorTexto = new Map(); // key: textoBreveNorm -> Array of solicitud strings starting with '4'
+// Guardar última carga cruda (array de filas) para poder subir/recuperar exactamente el mismo formato
+let ultimoJsonData = null;
 
 // Nombres de columnas esperadas
 const COLUMNAS_ESPERADAS = [
@@ -31,6 +35,18 @@ if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
     } else {
         console.warn('Supabase URL no configurada, se omite inicialización.');
     }
+}
+
+// Helper: calcular CyMP para un trabajo (buscar solicitudes que empiezan por '4' por Texto breve)
+function calcularCyMPParaTrabajo(indice) {
+    const trabajo = trabajos[indice];
+    if (!trabajo) return [];
+    const textoBr = String(trabajo['Texto breve'] || '').replace(/^HGPIe:\s*/i, '').trim().toLowerCase();
+    if (!textoBr) return [];
+    const arr = solicitudes4PorTexto.get(textoBr);
+    if (!arr || arr.length === 0) return [];
+    // Devolver copia para evitar mutaciones
+    return Array.from(arr);
 }
 
 // Referencias a elementos del DOM
@@ -280,6 +296,8 @@ function handleFileUpload(event) {
                 return;
             }
 
+            // Guardar la carga cruda para poder subirla a la nube tal cual
+            ultimoJsonData = jsonData;
             // Procesar los datos
             procesarDatos(jsonData);
             
@@ -325,6 +343,8 @@ function procesarDatos(jsonData) {
     horasTrabajos.clear();
     fechasFinTrabajos.clear();
     estadosPermisos.clear();
+    // Limpiar mapa de solicitudes que empiezan por '4' al procesar nuevo archivo
+    solicitudes4PorTexto.clear();
     
     const headers = jsonData[0];
     
@@ -361,6 +381,10 @@ function procesarDatos(jsonData) {
     const indiceCreadoPor = headers.findIndex(h => 
         h && h.toString().trim() === 'Creado por'
     );
+    // Buscar índice de Texto breve (para mapear solicitudes que empiezan por '4')
+    const indiceTextoBreve = headers.findIndex(h => 
+        h && h.toString().trim() === 'Texto breve'
+    );
     // NUEVO: Buscar índice de Solicitud para filtrar
     const indiceSolicitud = headers.findIndex(h => 
         h && h.toString().trim() === 'Solicitud'
@@ -388,10 +412,22 @@ function procesarDatos(jsonData) {
         const row = jsonData[i];
         if (!row || row.length === 0) continue;
         
-        // Filtrar trabajos cuya Solicitud empieza por "4"
+        // Filtrar trabajos cuya Solicitud empieza por "4" -> registrar en mapa y no incluir en "trabajos"
         if (indiceSolicitud !== -1) {
             const solicitud = String(row[indiceSolicitud] || '').trim();
             if (solicitud.startsWith('4')) {
+                // Obtener texto breve para agrupar
+                let textoBr = '';
+                if (indiceTextoBreve !== -1) {
+                    textoBr = String(row[indiceTextoBreve] || '').trim();
+                }
+                const clave = textoBr.replace(/^HGPIe:\s*/i, '').trim().toLowerCase();
+                if (!solicitudes4PorTexto.has(clave)) {
+                    solicitudes4PorTexto.set(clave, []);
+                }
+                const arr = solicitudes4PorTexto.get(clave);
+                if (!arr.includes(solicitud)) arr.push(solicitud);
+                // No añadir a trabajos (comportamiento original)
                 continue;
             }
         }
@@ -1522,6 +1558,10 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
     const solicitud = trabajo['Solicitud'] || '';
     const textoBreve = trabajo['Texto breve'] || '';
 
+    // Calcular CyMP (solicitudes que empiezan por '4' y coinciden por Texto breve)
+    const cympArray = calcularCyMPParaTrabajo(indice);
+    const cympStr = (cympArray && cympArray.length > 0) ? cympArray.join(', ') : '';
+
     // Crear modal
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -1556,6 +1596,10 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
             <div style="flex:1;"><strong>Solicitud:</strong><div id="modal-solicitud" style="margin-top:6px; word-break:break-all;">${solicitud}</div></div>
             <button id="btn-copiar-solicitud" style="padding:6px 10px;">Copiar</button>
         </div>
+        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <div style="flex:1;"><strong>CyMP:</strong><div id="modal-cymp" style="margin-top:6px; word-break:break-all;">${cympStr}</div></div>
+            <button id="btn-copiar-cymp" style="padding:6px 10px;">Copiar</button>
+        </div>
         <div style="margin-bottom:14px; display:flex; align-items:flex-start; gap:8px;">
             <div style="flex:1;"><strong>Texto breve:</strong><div id="modal-texto" style="margin-top:6px; white-space:pre-wrap;">${textoBreve}</div></div>
             <button id="btn-copiar-texto" style="padding:6px 10px; height:40px;">Copiar</button>
@@ -1583,11 +1627,15 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
     const btnOrden = modal.querySelector('#btn-copiar-orden');
     const btnSolicitud = modal.querySelector('#btn-copiar-solicitud');
     const btnTexto = modal.querySelector('#btn-copiar-texto');
+    const btnCyMP = modal.querySelector('#btn-copiar-cymp');
     const btnCerrar = modal.querySelector('#btn-cerrar-modal');
 
     btnOrden.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(orden, btnOrden); });
     btnSolicitud.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(solicitud, btnSolicitud); });
     btnTexto.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(textoBreve, btnTexto); });
+    if (btnCyMP) {
+        btnCyMP.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(cympStr, btnCyMP); });
+    }
 
     const cerrar = () => {
         if (overlay && overlay.parentElement) document.body.removeChild(overlay);
@@ -1907,7 +1955,13 @@ async function subirDatosSupabase() {
         return;
     }
 
-    const datos = obtenerDatosCompletos();
+    // Preferir subir la carga cruda si está disponible (preserva filas con Solicitud que empiezan por '4')
+    let datos = null;
+    if (ultimoJsonData) {
+        datos = ultimoJsonData;
+    } else {
+        datos = obtenerDatosCompletos();
+    }
     if (!datos) { 
         alert('No hay datos para subir'); 
         return; 
@@ -2355,6 +2409,7 @@ function generarListado() {
         html += '<th style="width: 150px;">Departamento</th>';
         html += '<th style="width: 100px;">Orden</th>';
         html += '<th style="width: 100px;">Solicitud</th>';
+        html += '<th style="width: 120px;">CyMP</th>';
         html += '<th>Texto breve</th>';
         html += '<th style="width: 80px; text-align: center;">Descargo</th>';
         html += '<th style="width: 80px; text-align: center;">Estado</th>';
@@ -2394,8 +2449,12 @@ function generarListado() {
             html += '<tr>';
             html += `<td>${hora}</td>`;
             html += `<td><span class="departamento-badge ${claseTipo}">${departamentoLabel}</span></td>`;
+            // Calcular CyMP para este trabajo
+            const cympArrRow = calcularCyMPParaTrabajo(indice);
+            const cympRow = (cympArrRow && cympArrRow.length > 0) ? cympArrRow.join(', ') : '';
             html += `<td>${orden}</td>`;
             html += `<td>${solicitud}</td>`;
+            html += `<td>${cympRow}</td>`;
             html += `<td>${textoBreve}</td>`;
             html += `<td style="text-align: center;">${iconoDescargo}</td>`;
             html += `<td style="text-align: center;"><span class="estado-check ${claseEstado}">${iconoEstado}</span></td>`;
