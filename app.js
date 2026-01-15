@@ -1393,10 +1393,11 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
             trabajoElement.classList.add('estado-pendiente');
         }
         
-        // Evento de clic derecho para editar hora, fecha de finalización y estado del permiso
+        // Evento de clic derecho: mostrar modal con datos importantes (Orden, Solicitud, Texto breve)
+        // Anteriormente abría el editor de hora; ahora mostramos un modal con botones de copiar y un botón Cerrar
         trabajoElement.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            mostrarEditorHora(indice, trabajoElement, hora, fechaStr, estadoPermiso);
+            mostrarDetallesTrabajoContextMenu(indice, trabajoElement, fechaStr);
         });
         
         contenedor.appendChild(trabajoElement);
@@ -1510,6 +1511,97 @@ function mostrarEditorHora(indice, elemento, horaActual, fechaInicioStr, estadoA
     
     // Enfocar el input de hora
     horaInput.focus();
+}
+
+// Mostrar modal con detalles importantes al hacer clic derecho
+function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
+    const trabajo = trabajos[indice];
+    if (!trabajo) return;
+
+    const orden = trabajo['Orden'] || '';
+    const solicitud = trabajo['Solicitud'] || '';
+    const textoBreve = trabajo['Texto breve'] || '';
+
+    // Crear modal
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.right = '0';
+    overlay.style.bottom = '0';
+    overlay.style.background = 'rgba(0,0,0,0.4)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9999';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-detalles';
+    modal.style.background = '#fff';
+    modal.style.padding = '18px';
+    modal.style.borderRadius = '8px';
+    modal.style.width = '420px';
+    modal.style.maxWidth = '90%';
+    modal.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)';
+    modal.style.fontFamily = 'system-ui, Arial, sans-serif';
+
+    modal.innerHTML = `
+        <h3 style="margin:0 0 12px 0; font-size:16px;">Detalles del trabajo</h3>
+        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <div style="flex:1;"><strong>Orden:</strong><div id="modal-orden" style="margin-top:6px; word-break:break-all;">${orden}</div></div>
+            <button id="btn-copiar-orden" style="padding:6px 10px;">Copiar</button>
+        </div>
+        <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <div style="flex:1;"><strong>Solicitud:</strong><div id="modal-solicitud" style="margin-top:6px; word-break:break-all;">${solicitud}</div></div>
+            <button id="btn-copiar-solicitud" style="padding:6px 10px;">Copiar</button>
+        </div>
+        <div style="margin-bottom:14px; display:flex; align-items:flex-start; gap:8px;">
+            <div style="flex:1;"><strong>Texto breve:</strong><div id="modal-texto" style="margin-top:6px; white-space:pre-wrap;">${textoBreve}</div></div>
+            <button id="btn-copiar-texto" style="padding:6px 10px; height:40px;">Copiar</button>
+        </div>
+        <div style="text-align:right; margin-top:6px;">
+            <button id="btn-cerrar-modal" style="padding:8px 12px;">Cerrar</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Funciones copiar
+    const copiarTexto = (text, button) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const original = button.textContent;
+            button.textContent = '✅ Copiado';
+            setTimeout(() => { button.textContent = original; }, 1000);
+        }).catch(err => {
+            console.error('Error copiando al portapapeles', err);
+        });
+    };
+
+    const btnOrden = modal.querySelector('#btn-copiar-orden');
+    const btnSolicitud = modal.querySelector('#btn-copiar-solicitud');
+    const btnTexto = modal.querySelector('#btn-copiar-texto');
+    const btnCerrar = modal.querySelector('#btn-cerrar-modal');
+
+    btnOrden.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(orden, btnOrden); });
+    btnSolicitud.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(solicitud, btnSolicitud); });
+    btnTexto.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(textoBreve, btnTexto); });
+
+    const cerrar = () => {
+        if (overlay && overlay.parentElement) document.body.removeChild(overlay);
+    };
+
+    btnCerrar.addEventListener('click', (e) => { e.stopPropagation(); cerrar(); });
+
+    // Cerrar al hacer clic fuera del modal
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) cerrar();
+    });
+
+    // Evitar propagación del click dentro del modal para no cerrar
+    modal.addEventListener('click', (e) => { e.stopPropagation(); });
 }
 
 // Manejar inicio de arrastre (desde el listado)
