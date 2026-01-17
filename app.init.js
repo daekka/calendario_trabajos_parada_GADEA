@@ -232,7 +232,7 @@ document.querySelectorAll('.tab-button').forEach(button => {
             }
 
             html += `<div class="aislamiento-item">`;
-            html += `<span class="aislamiento-numero">${numero}</span> <span class="aislamiento-descripcion">${data.descripcion}</span> <span class="aislamiento-estados">${data.estados}</span>`;
+            html += `<span class="aislamiento-numero">${numero}</span> <span class="aislamiento-descripcion aislamiento-descripcion-resaltada">${data.descripcion}</span> <span class="aislamiento-estados">${data.estados}</span>`;
             html += `<div class="aislamiento-resumen">`;
             html += `<span class="badge-aislamiento-resumen badge-total">Total: ${resumen.total}</span>`;
             html += `<span class="badge-aislamiento-resumen badge-autorizado">Autorizados: ${resumen.autorizado}</span>`;
