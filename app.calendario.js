@@ -438,6 +438,29 @@ function compararHoras(hora1, hora2) {
     return m1 - m2;
 }
 
+// Ajustar hover para que no se recorte en los bordes del calendario
+function ajustarHoverTrabajo(elemento) {
+    const calendarioSection = elemento.closest('.calendario-section');
+    if (!calendarioSection) return;
+
+    const scale = 1.8;
+    const rect = elemento.getBoundingClientRect();
+    const containerRect = calendarioSection.getBoundingClientRect();
+    const deltaX = (rect.width * scale - rect.width) / 2;
+
+    let translateX = 0;
+    const leftOverflow = rect.left - deltaX - containerRect.left;
+    if (leftOverflow < 0) translateX += -leftOverflow;
+    const rightOverflow = rect.right + deltaX - containerRect.right;
+    if (rightOverflow > 0) translateX -= rightOverflow;
+
+    if (translateX !== 0) {
+        elemento.style.setProperty('--hover-translate-x', `${Math.round(translateX)}px`);
+    } else {
+        elemento.style.removeProperty('--hover-translate-x');
+    }
+}
+
 // Mostrar trabajos asignados a un día
 function mostrarTrabajosEnDia(contenedor, fechaStr) {
     contenedor.innerHTML = '';
@@ -604,6 +627,12 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         trabajoElement.appendChild(primeraLinea);
         trabajoElement.appendChild(textoContainer);
         trabajoElement.title = `${textoBreve} - ${hora}`;
+
+        // Ajuste dinámico para que el hover no se recorte en los bordes
+        trabajoElement.addEventListener('mouseenter', () => ajustarHoverTrabajo(trabajoElement));
+        trabajoElement.addEventListener('mouseleave', () => {
+            trabajoElement.style.removeProperty('--hover-translate-x');
+        });
         
         // Eventos de drag para trabajos en el calendario
         trabajoElement.addEventListener('dragstart', handleDragStartCalendario);

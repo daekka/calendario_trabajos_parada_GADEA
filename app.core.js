@@ -55,6 +55,7 @@ function calcularCyMPParaTrabajo(indice) {
 // Referencias a elementos del DOM
 const aislamientosContainer = document.getElementById('aislamientosContainer');
 const filtroAislamientoInput = document.getElementById('filtroAislamientoInput');
+const filtroAislamientoTextoInput = document.getElementById('filtroAislamientoTextoInput');
 const fileInput = document.getElementById('fileInput');
 const fileTxtInput = document.getElementById('fileTxtInput');
 const exportBtn = document.getElementById('exportBtn');

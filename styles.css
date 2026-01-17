@@ -819,6 +819,8 @@ body {
     display: grid;
     grid-template-columns: repeat(7, auto);
     gap: 4px;
+    position: relative;
+    z-index: 0;
 }
 
 .dia-calendario {
@@ -830,11 +832,14 @@ body {
     padding: 6px;
     position: relative;
     transition: all 0.2s ease;
+    overflow: visible;
+    z-index: 0;
 }
 
 .dia-calendario:hover {
     border-color: #667eea;
     background: #f0f4ff;
+    z-index: 2;
 }
 
 .dia-calendario.dia-actual {
@@ -871,6 +876,7 @@ body {
     flex-direction: column;
     gap: 4px;
     margin-top: 5px;
+    overflow: visible;
 }
 
 .trabajo-en-calendario {
@@ -898,7 +904,7 @@ body {
 
 .trabajo-en-calendario:hover {
     opacity: 0.99;
-    transform: scale(1.8);
+    transform: translateX(var(--hover-translate-x, 0px)) scale(1.8);
     z-index: 9999; /* bring above other elements */
 }
 

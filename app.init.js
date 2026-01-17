@@ -161,8 +161,9 @@ document.querySelectorAll('.tab-button').forEach(button => {
             aislamientosContainer.innerHTML = '<p class="empty-message">No hay aislamientos cargados</p>';
             return;
         }
-        // Obtener filtro
-        const filtro = filtroAislamientoInput ? filtroAislamientoInput.value.trim() : '';
+        // Obtener filtros
+        const filtroNumero = filtroAislamientoInput ? filtroAislamientoInput.value.trim() : '';
+        const filtroTexto = filtroAislamientoTextoInput ? filtroAislamientoTextoInput.value.trim() : '';
         // Map: numero aislamiento -> { descripcion, estados, solicitudes: [id, ...] }
         const aislamientosMap = new Map();
         // Recorrer todas las solicitudes y sus aislamientos
@@ -180,8 +181,17 @@ document.querySelectorAll('.tab-button').forEach(button => {
         }
         // Filtrar por número si hay filtro
         let aislamientosFiltrados = Array.from(aislamientosMap.entries());
-        if (filtro) {
-            aislamientosFiltrados = aislamientosFiltrados.filter(([numero]) => numero.includes(filtro));
+        if (filtroNumero) {
+            aislamientosFiltrados = aislamientosFiltrados.filter(([numero]) => numero.includes(filtroNumero));
+        }
+        // Filtrar por texto (AND) si hay texto
+        if (filtroTexto) {
+            const textoFiltro = filtroTexto.toLowerCase();
+            aislamientosFiltrados = aislamientosFiltrados.filter(([_, data]) => {
+                const desc = (data.descripcion || '').toLowerCase();
+                const est = (data.estados || '').toLowerCase();
+                return (desc + ' ' + est).includes(textoFiltro);
+            });
         }
         if (aislamientosFiltrados.length === 0) {
             aislamientosContainer.innerHTML = '<p class="empty-message">No hay aislamientos que coincidan</p>';
@@ -262,6 +272,12 @@ window.addEventListener('DOMContentLoaded', () => {
     // Filtro de aislamientos por número
     if (filtroAislamientoInput) {
         filtroAislamientoInput.addEventListener('input', () => {
+            renderizarAislamientos();
+        });
+    }
+    // Filtro de aislamientos por texto
+    if (filtroAislamientoTextoInput) {
+        filtroAislamientoTextoInput.addEventListener('input', () => {
             renderizarAislamientos();
         });
     }
