@@ -67,7 +67,6 @@ const calendarioContainer = document.getElementById('calendarioContainer');
 const fechaInicio = document.getElementById('fechaInicio');
 const fechaFin = document.getElementById('fechaFin');
 const actualizarCalendarioBtn = document.getElementById('actualizarCalendarioBtn');
-const ganttContainer = document.getElementById('ganttContainer');
 // Referencias Dropdown
 const dropdownBtn = document.getElementById('dropdownBtn');
 const dropdownMenu = document.getElementById('dropdownMenu');
@@ -254,10 +253,6 @@ document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.add('active');
         document.getElementById(`${tabName}Tab`).classList.add('active');
         
-        // Si se cambia a la pestaña Gantt, generar el gráfico
-        if (tabName === 'gantt') {
-            generarGantt();
-        }
         // Si se cambia a la pestaña Listado, generar el listado
         if (tabName === 'listado') {
             generarListado();
@@ -426,10 +421,7 @@ function handleFileUpload(event) {
             // Distribuir trabajos según fechas de parada
             distribuirTrabajos();
             
-            // Actualizar Gantt si está visible
-            if (document.getElementById('ganttTab').classList.contains('active')) {
-                generarGantt();
-            }
+            // (Gantt eliminado)
             
             // Actualizar estadísticas
             actualizarEstadisticasTrabajos();
@@ -948,10 +940,7 @@ function handleDropListado(e) {
     // Actualizar listado para mostrar el trabajo nuevamente
     mostrarTrabajos();
     
-    // Actualizar Gantt si está visible
-    if (document.getElementById('ganttTab').classList.contains('active')) {
-        generarGantt();
-    }
+    // (Gantt eliminado) -- no hay acción aquí
     
     // Actualizar estadísticas
     actualizarEstadisticasTrabajos();
@@ -1051,10 +1040,6 @@ function igualarAnchoDias() {
 // Actualizar calendario cuando cambien las fechas
 function actualizarCalendario() {
     distribuirTrabajos();
-    // Actualizar Gantt si está visible
-    if (document.getElementById('ganttTab').classList.contains('active')) {
-        generarGantt();
-    }
     // Actualizar estadísticas
     actualizarEstadisticasTrabajos();
 }
@@ -1676,10 +1661,7 @@ function mostrarEditorHora(indice, elemento, horaActual, fechaInicioStr, estadoA
             }
         }
         
-        // Actualizar Gantt si está visible
-        if (document.getElementById('ganttTab').classList.contains('active')) {
-            generarGantt();
-        }
+        // (Gantt eliminado)
         
         // Actualizar estadísticas
         actualizarEstadisticasTrabajos();
@@ -2070,10 +2052,7 @@ function handleDrop(e) {
             mostrarTrabajos();
         }
         
-        // Actualizar Gantt si está visible
-        if (document.getElementById('ganttTab').classList.contains('active')) {
-            generarGantt();
-        }
+        // (Gantt eliminado)
         
         // Actualizar estadísticas
         actualizarEstadisticasTrabajos();
@@ -2383,10 +2362,7 @@ async function leerDatosSupabase(param) {
         // Distribuir trabajos en calendario
         distribuirTrabajos();
         
-        // Actualizar visualizaciones
-        if (document.getElementById('ganttTab').classList.contains('active')) {
-            generarGantt();
-        }
+        // Actualizar visualizaciones (Gantt eliminado)
         actualizarEstadisticasTrabajos();
         
         // Habilitar botón de exportar local
@@ -2405,230 +2381,7 @@ async function leerDatosSupabase(param) {
     }
 }
 
-// Generar gráfico Gantt
-function generarGantt() {
-    if (trabajos.length === 0) {
-        ganttContainer.innerHTML = '<p class="empty-message">Carga un archivo Excel para ver el gráfico Gantt</p>';
-        return;
-    }
-    
-    // Obtener todos los trabajos asignados con sus fechas
-    const trabajosConFechasGantt = [];
-    
-    for (const [fechaStr, indices] of trabajosConFechas.entries()) {
-        indices.forEach(indice => {
-            const trabajo = trabajos[indice];
-            
-            // NUEVO: Filtro global
-            if (!filtroTipos.has('TODOS') && !filtroTipos.has(trabajo.tipoMantenimiento)) {
-                return;
-            }
-
-            const fechaInicioTrabajo = normalizarFecha(fechaStr);
-            
-            // Obtener fecha de finalización
-            let fechaFinTrabajo = null;
-            if (fechasFinTrabajos.has(indice)) {
-                fechaFinTrabajo = fechasFinTrabajos.get(indice);
-            } else if (trabajo['Validez a']) {
-                fechaFinTrabajo = normalizarFecha(trabajo['Validez a']);
-            }
-            
-            // Si no hay fecha de fin, usar el día siguiente de inicio
-            if (!fechaFinTrabajo && fechaInicioTrabajo) {
-                const fechaInicioDate = new Date(fechaInicioTrabajo);
-                fechaInicioDate.setDate(fechaInicioDate.getDate() + 1);
-                const ano = fechaInicioDate.getFullYear();
-                const mes = String(fechaInicioDate.getMonth() + 1).padStart(2, '0');
-                const dia = String(fechaInicioDate.getDate()).padStart(2, '0');
-                fechaFinTrabajo = `${ano}-${mes}-${dia}`;
-            }
-            
-            if (fechaInicioTrabajo) {
-                trabajosConFechasGantt.push({
-                    indice,
-                    trabajo,
-                    fechaInicio: fechaInicioTrabajo,
-                    fechaFin: fechaFinTrabajo || fechaInicioTrabajo,
-                    hora: obtenerHoraTrabajo(indice)
-                });
-            }
-        });
-    }
-    
-    if (trabajosConFechasGantt.length === 0) {
-        ganttContainer.innerHTML = '<p class="empty-message">No hay trabajos asignados (o filtrados) para mostrar en el Gantt</p>';
-        return;
-    }
-    
-    // Ordenar por fecha de inicio
-    trabajosConFechasGantt.sort((a, b) => {
-        const fechaA = new Date(a.fechaInicio);
-        const fechaB = new Date(b.fechaInicio);
-        return fechaA - fechaB;
-    });
-    
-    // Calcular rango de fechas para el gráfico
-    const fechasInicio = trabajosConFechasGantt.map(t => new Date(t.fechaInicio));
-    const fechasFin = trabajosConFechasGantt.map(t => new Date(t.fechaFin));
-    const fechaMin = new Date(Math.min(...fechasInicio));
-    const fechaMax = new Date(Math.max(...fechasFin));
-    
-    // Ajustar al rango de fechas seleccionado si existe
-    const fechaInicioStr = fechaInicio.value;
-    const fechaFinStr = fechaFin.value;
-    if (fechaInicioStr && fechaFinStr) {
-        const inicioSeleccionado = new Date(fechaInicioStr);
-        const finSeleccionado = new Date(fechaFinStr);
-        if (inicioSeleccionado < fechaMin) fechaMin.setTime(inicioSeleccionado.getTime());
-        if (finSeleccionado > fechaMax) fechaMax.setTime(finSeleccionado.getTime());
-    }
-    
-    // Generar array de fechas para el timeline
-    const fechasTimeline = [];
-    const fechaActual = new Date(fechaMin);
-    while (fechaActual <= fechaMax) {
-        fechasTimeline.push(new Date(fechaActual));
-        fechaActual.setDate(fechaActual.getDate() + 1);
-    }
-    
-    // Crear HTML del Gantt
-    let html = '<div class="gantt-header">';
-    html += '<div class="gantt-header-left">Trabajo</div>';
-    html += '<div class="gantt-header-right">';
-    
-    fechasTimeline.forEach(fecha => {
-        const esFinDeSemana = fecha.getDay() === 0 || fecha.getDay() === 6;
-        const esHoy = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()) === 
-                     formatearFecha(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-        let clase = '';
-        if (esHoy) clase = 'today';
-        else if (esFinDeSemana) clase = 'weekend';
-        
-        const diaSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][fecha.getDay()];
-        html += `<div class="gantt-date-header ${clase}">${diaSemana}<br>${fecha.getDate()}/${fecha.getMonth() + 1}</div>`;
-    });
-    
-    html += '</div></div>';
-    
-    // Crear filas de trabajos
-    trabajosConFechasGantt.forEach(({ indice, trabajo, fechaInicio: fechaIni, fechaFin: fechaF, hora }) => {
-        // Normalizar fechas para comparación
-        const fechaIniStr = fechaIni.split('T')[0];
-        const fechaFinStr = fechaF.split('T')[0];
-        
-        // Encontrar el índice de la fecha de inicio y fin en el timeline
-        let indiceInicio = -1;
-        let indiceFin = -1;
-        
-        fechasTimeline.forEach((fecha, index) => {
-            const fechaStr = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-            if (fechaStr === fechaIniStr && indiceInicio === -1) {
-                indiceInicio = index;
-            }
-            if (fechaStr === fechaFinStr) {
-                indiceFin = index;
-            }
-        });
-        
-        // Si no encontramos la fecha exacta, buscar la más cercana
-        if (indiceInicio === -1) {
-            for (let i = 0; i < fechasTimeline.length; i++) {
-                const fechaStr = formatearFecha(fechasTimeline[i].getFullYear(), fechasTimeline[i].getMonth(), fechasTimeline[i].getDate());
-                if (fechaStr >= fechaIniStr) {
-                    indiceInicio = i;
-                    break;
-                }
-            }
-            if (indiceInicio === -1) indiceInicio = 0;
-        }
-        
-        if (indiceFin === -1) {
-            for (let i = fechasTimeline.length - 1; i >= 0; i--) {
-                const fechaStr = formatearFecha(fechasTimeline[i].getFullYear(), fechasTimeline[i].getMonth(), fechasTimeline[i].getDate());
-                if (fechaStr <= fechaFinStr) {
-                    indiceFin = i;
-                    break;
-                }
-            }
-            if (indiceFin === -1) indiceFin = fechasTimeline.length - 1;
-        }
-        
-        // Calcular duración en días (incluyendo el día de inicio y fin)
-        const duracion = indiceFin - indiceInicio + 1;
-        
-        // Calcular posición y ancho basado en el ancho fijo de cada celda (60px)
-        const anchoCelda = 60;
-        const posicionPx = indiceInicio * anchoCelda;
-        const anchoPx = duracion * anchoCelda;
-        
-        // Obtener texto breve
-        let textoBreve = trabajo['Texto breve'] || `Trabajo ${indice + 1}`;
-        //textoBreve = textoBreve.replace(/^HGPIe:\s*/i, '');
-        
-        // Obtener estado del permiso
-        const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
-        let claseEstado = 'estado-pendiente';
-        if (estadoPermiso === 'AUTORIZADO') {
-            claseEstado = 'estado-autorizado';
-        } else if (estadoPermiso === 'APROBADO') {
-            claseEstado = 'estado-aprobado';
-        }
-        
-        html += '<div class="gantt-row">';
-        html += '<div class="gantt-row-label">';
-        html += `<div class="gantt-row-label-title">${textoBreve}</div>`;
-        html += `<div class="gantt-row-label-meta">${fechaIni} - ${fechaF} | ${hora} | ${estadoPermiso}</div>`;
-        html += '</div>';
-        html += '<div class="gantt-row-timeline">';
-        
-        // Añadir celdas del timeline
-        fechasTimeline.forEach(fecha => {
-            const esFinDeSemana = fecha.getDay() === 0 || fecha.getDay() === 6;
-            const esHoy = formatearFecha(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()) === 
-                         formatearFecha(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-            let clase = '';
-            if (esHoy) clase = 'today';
-            else if (esFinDeSemana) clase = 'weekend';
-            html += `<div class="gantt-timeline-cell ${clase}"></div>`;
-        });
-        
-        // NUEVO: Añadir barra del trabajo usando píxeles para mayor precisión con clase de estado y TIPO
-        html += `<div class="gantt-bar ${claseEstado} ${trabajo.claseTipo || ''}" style="left: ${posicionPx}px; width: ${anchoPx}px;" title="${textoBreve} - ${fechaIni} a ${fechaF} - ${estadoPermiso}">${textoBreve.substring(0, 20)}${textoBreve.length > 20 ? '...' : ''}</div>`;
-        
-        html += '</div></div>';
-    });
-    
-    ganttContainer.innerHTML = html;
-    
-    // Sincronizar el scroll del header con el contenido y asegurar mismo ancho
-    setTimeout(() => {
-        const ganttSection = ganttContainer.closest('.gantt-section');
-        const headerRight = ganttContainer.querySelector('.gantt-header-right');
-        const rowsTimeline = ganttContainer.querySelectorAll('.gantt-row-timeline');
-        
-        if (ganttSection && headerRight && rowsTimeline.length > 0) {
-            // Calcular el ancho total del timeline (número de días * 60px)
-            const anchoTotalTimeline = fechasTimeline.length * 60;
-            
-            // Asegurar que el header y las filas tengan el mismo ancho
-            headerRight.style.width = `${anchoTotalTimeline}px`;
-            headerRight.style.minWidth = `${anchoTotalTimeline}px`;
-            headerRight.style.flexShrink = '0';
-            
-            rowsTimeline.forEach(rowTimeline => {
-                rowTimeline.style.width = `${anchoTotalTimeline}px`;
-                rowTimeline.style.minWidth = `${anchoTotalTimeline}px`;
-                rowTimeline.style.flexShrink = '0';
-            });
-            
-            // Sincronizar scroll horizontal del header con el contenedor
-            ganttSection.addEventListener('scroll', () => {
-                headerRight.scrollLeft = ganttSection.scrollLeft;
-            });
-        }
-    }, 0);
-}
+// Gantt removed: función eliminará el código Gantt. Si se necesita volver a añadir, restaurar desde control de versiones.
 
 
 // Cargar automáticamente datos de la nube al iniciar
