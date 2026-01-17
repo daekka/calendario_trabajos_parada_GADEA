@@ -52,6 +52,7 @@ function calcularCyMPParaTrabajo(indice) {
 // Referencias a elementos del DOM
 const fileInput = document.getElementById('fileInput');
 const exportBtn = document.getElementById('exportBtn');
+const exportBtnTop = document.getElementById('exportBtnTop');
 const uploadSupabaseBtn = document.getElementById('uploadSupabaseBtn');
 const readSupabaseBtn = document.getElementById('readSupabaseBtn');
 const infoDatosNube = document.getElementById('infoDatosNube');
@@ -114,6 +115,7 @@ const toggleTrabajosBtn = document.getElementById('toggleTrabajosBtn');
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 exportBtn.addEventListener('click', exportarExcel);
+if (exportBtnTop) exportBtnTop.addEventListener('click', exportarExcel);
 if (uploadSupabaseBtn) uploadSupabaseBtn.addEventListener('click', subirDatosSupabase);
 if (readSupabaseBtn) readSupabaseBtn.addEventListener('click', leerDatosSupabase);
 
@@ -336,8 +338,9 @@ function handleFileUpload(event) {
             // Actualizar estadísticas
             actualizarEstadisticasTrabajos();
             
-            // Habilitar botón de exportar
+            // Habilitar botón de exportar (sidebar y top)
             exportBtn.disabled = false;
+            if (exportBtnTop) exportBtnTop.disabled = false;
             
         } catch (error) {
             console.error('Error al leer el archivo:', error);
