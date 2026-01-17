@@ -9,6 +9,12 @@
     margin-left: 8px;
     background: #888;
     vertical-align: middle;
+    width: 120px;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .badge-autorizado {
     background: #43a047;
@@ -94,13 +100,35 @@
     margin-left: 18px;
     font-size: 0.98em;
 }
+
 .aislamiento-solicitud-item {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
     color: #444;
 }
-.trabajo-en-calendario.estado-aprobado {
-    border-left-color: orange;
+
+.aislamiento-line {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
 }
+
+.aislamiento-line b { margin-right: 6px; }
+
+.aislamiento-solicitud-item .departamento-badge {
+    width: 120px;
+    padding: 2px 8px;
+    margin-left: 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    vertical-align: middle;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .trabajo-en-calendario.estado-pendiente {
     border-left-color: #bdbdbd;
 }
@@ -1243,6 +1271,16 @@ body {
 .departamento-badge.tipo-otros {
     background: #eeeeee;
     color: #424242;
+}
+
+/* Versión compacta del badge para la lista de aislamientos */
+.aislamiento-solicitud-item .departamento-badge {
+    width: auto;
+    padding: 2px 8px;
+    margin-left: 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    vertical-align: middle;
 }
 
 /* ==================== ESTILOS DE IMPRESIÓN ==================== */

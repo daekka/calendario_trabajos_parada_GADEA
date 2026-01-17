@@ -325,17 +325,43 @@ document.querySelectorAll('.tab-button').forEach(button => {
                         break;
                     }
                 }
-                html += `<li class="aislamiento-solicitud-item"><b>${solicitud}</b>`;
-                if (textoBreve) html += ` — <span class="aislamiento-solicitud-txt">${textoBreve}</span>`;
+                // Preparar badges y contenido en columnas: izquierda = texto (truncable), derecha = badges
+                let deptHtml = '';
+                try {
+                    const trabajoObj = trabajos.find(t => t && t['Solicitud'] && t['Solicitud'].toString().trim() === solicitud);
+                    let claseDept = 'tipo-otros';
+                    let labelDept = '';
+                    if (trabajoObj) {
+                        const creadoPor = trabajoObj['Creado por'] || trabajoObj['Creado_por'] || trabajoObj.creadoPor || '';
+                        if (typeof MTO_MAPPING !== 'undefined' && MTO_MAPPING) {
+                            const m = MTO_MAPPING[creadoPor] || MTO_MAPPING['DEFAULT'];
+                            if (m) {
+                                claseDept = m.clase || claseDept;
+                                labelDept = m.label || '';
+                            }
+                        }
+                    }
+                    if (labelDept) deptHtml = `<span class="departamento-badge ${claseDept}">${labelDept}</span>`;
+                } catch (e) {
+                    console.warn('Error obteniendo departamento para solicitud', solicitud, e);
+                }
+
+                let estadoHtml = '';
                 if (estado) {
                     let badgeClass = 'badge-estado';
                     if (estado === 'AUTORIZADO') badgeClass += ' badge-autorizado';
                     else if (estado === 'APROBADO') badgeClass += ' badge-aprobado';
                     else if (estado === 'PENDIENTE') badgeClass += ' badge-pendiente';
                     else badgeClass += ' badge-otro';
-                    html += ` <span class="${badgeClass}">${estado}</span>`;
+                    estadoHtml = `<span class="${badgeClass}">${estado}</span>`;
                 }
-                html += `</li>`;
+
+                     const textoHtml = textoBreve ? ` — <span class="aislamiento-solicitud-txt">${textoBreve}</span>` : '';
+
+                     // Colocar badges justo al final del texto, inline
+                     html += `<li class="aislamiento-solicitud-item">
+                                     <div class="aislamiento-line"><b>${solicitud}</b>${textoHtml}${deptHtml}${estadoHtml}</div>
+                                 </li>`;
             }
             html += `</ul>`;
             html += `</div>`;
