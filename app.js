@@ -7,6 +7,9 @@ let valoresOriginalesValidoDe = new Map(); // Map: índice -> valor original de 
 let horasTrabajos = new Map(); // Map: índice -> hora (string) para almacenar horas modificadas
 let fechasFinTrabajos = new Map(); // Map: índice -> fecha fin (string) para almacenar fechas de finalización modificadas
 let estadosPermisos = new Map(); // Map: índice -> estado (string) para almacenar estados de permisos: 'SOLICITADO', 'EJECUTADO', 'CERRADO'
+// Map para almacenar aislamientos parseados desde fichero txt
+// Estructura: { solicitudId: [ { numero: '3041727', descripcion: 'Fallo ...', estados: 'PREP NOBL NORO CERR' }, ... ] }
+let aislamientosPorSolicitud = new Map();
 // Map para almacenar solicitudes que empiezan por '4', agrupadas por Texto breve (normalizado)
 let solicitudes4PorTexto = new Map(); // key: textoBreveNorm -> Array of solicitud strings starting with '4'
 // Guardar última carga cruda (array de filas) para poder subir/recuperar exactamente el mismo formato
@@ -51,6 +54,7 @@ function calcularCyMPParaTrabajo(indice) {
 
 // Referencias a elementos del DOM
 const fileInput = document.getElementById('fileInput');
+const fileTxtInput = document.getElementById('fileTxtInput');
 const exportBtn = document.getElementById('exportBtn');
 const exportBtnTop = document.getElementById('exportBtnTop');
 const uploadSupabaseBtn = document.getElementById('uploadSupabaseBtn');
@@ -114,6 +118,7 @@ const toggleTrabajosBtn = document.getElementById('toggleTrabajosBtn');
 
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
+if (fileTxtInput) fileTxtInput.addEventListener('change', handleTxtUpload);
 exportBtn.addEventListener('click', exportarExcel);
 if (exportBtnTop) exportBtnTop.addEventListener('click', exportarExcel);
 if (uploadSupabaseBtn) uploadSupabaseBtn.addEventListener('click', subirDatosSupabase);
@@ -1645,6 +1650,10 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
             <div class="modal-label"><strong>Texto breve:</strong><div id="modal-texto" class="modal-value">${textoBreve}</div></div>
             <button id="btn-copiar-texto" class="modal-btn modal-btn-copy" style="height:40px;">Copiar</button>
         </div>
+        <div class="modal-row">
+            <div class="modal-label"><strong>Aislamientos:</strong><div id="modal-aislamientos" class="modal-value"></div></div>
+            <button id="btn-copiar-aislamientos" class="modal-btn modal-btn-copy" style="height:40px;">Copiar</button>
+        </div>
         <div class="modal-actions">
             <button id="btn-cerrar-modal" class="modal-btn modal-btn-close">Cerrar</button>
         </div>
@@ -1669,6 +1678,7 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
     const btnSolicitud = modal.querySelector('#btn-copiar-solicitud');
     const btnTexto = modal.querySelector('#btn-copiar-texto');
     const btnCyMP = modal.querySelector('#btn-copiar-cymp');
+    const btnAislamientos = modal.querySelector('#btn-copiar-aislamientos');
     const btnCerrar = modal.querySelector('#btn-cerrar-modal');
 
     btnOrden.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(orden, btnOrden); });
@@ -1676,6 +1686,21 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
     btnTexto.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(textoBreve, btnTexto); });
     if (btnCyMP) {
         btnCyMP.addEventListener('click', (e) => { e.stopPropagation(); copiarTexto(cympStr, btnCyMP); });
+    }
+    // Mostrar aislamientos asignados a la solicitud de este trabajo
+    const modalAislamientosDiv = modal.querySelector('#modal-aislamientos');
+    const solicitudKey = (trabajo['Solicitud'] || '').toString().trim();
+    const aislamientos = aislamientosPorSolicitud.get(solicitudKey) || [];
+    if (modalAislamientosDiv) {
+        if (aislamientos.length === 0) {
+            modalAislamientosDiv.textContent = 'Sin aislamientos asignados';
+        } else {
+            // Mostrar cada aislamiento en nueva línea con número - descripción - estados
+            modalAislamientosDiv.innerHTML = aislamientos.map(a => `${a.numero} — ${a.descripcion} <br><small>${a.estados}</small>`).join('<hr style="border:none;border-top:1px solid #eee;margin:6px 0;">');
+        }
+    }
+    if (btnAislamientos) {
+        btnAislamientos.addEventListener('click', (e) => { e.stopPropagation(); const txt = aislamientos.map(a => `${a.numero} | ${a.descripcion} | ${a.estados}`).join('\n'); copiarTexto(txt, btnAislamientos); });
     }
 
     const cerrar = () => {
@@ -1701,6 +1726,125 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
         }
     }
     document.addEventListener('keydown', onKeyDownClose);
+}
+
+// Manejar subida de fichero .txt con aislamientos
+function handleTxtUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const parsed = parsearAislamientosTxt(text);
+        if (parsed) {
+            aislamientosPorSolicitud.clear();
+            // parsed tiene formato { solicitudId: [ { numero, descripcion, estados } ] }
+            Object.keys(parsed).forEach(k => {
+                aislamientosPorSolicitud.set(k, parsed[k]);
+            });
+
+            // Asignar aislamientos a los trabajos actuales (por número de solicitud)
+            asignarAislamientosATrabajos();
+
+            alert('Aislamientos parseados y asignados correctamente');
+            // Actualizar UI (listado y calendario)
+            mostrarTrabajos();
+            // Refrescar días mostrados
+            trabajosConFechas.forEach((_, fecha) => actualizarDiaCalendario(fecha));
+        } else {
+            alert('No se pudieron parsear los aislamientos');
+        }
+    };
+    reader.readAsText(file, 'utf-8');
+}
+
+// Parsear el fichero txt con la estructura jerárquica de la muestra
+function parsearAislamientosTxt(text) {
+    const lines = text.split(/\r?\n/);
+    const result = {}; // solicitud -> array de aislamientos
+
+    let currentSolicitud = null;
+    let lastAislamiento = null;
+
+    const normalize = (s) => {
+        if (!s) return '';
+        const digits = String(s).replace(/\D/g, '');
+        // eliminar ceros a la izquierda
+        return digits.replace(/^0+/, '') || digits;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        if (!raw) continue;
+        const line = raw.trim();
+        if (!line) continue;
+
+        // Buscar primer número largo en la línea
+        const m = line.match(/(\d{5,10})/);
+        if (m) {
+            const num = m[1];
+            const norm = normalize(num);
+
+            // Si el número empieza por '3' -> aislamiento ligado a la última solicitud
+            if (/^3/.test(norm) && currentSolicitud) {
+                // descripcion: el resto de la línea tras el número
+                const descripcion = line.replace(num, '').replace(/^[-\s|]*/, '').trim();
+                // buscar estados en la siguiente línea si está en mayúsculas
+                let estados = '';
+                if (i + 1 < lines.length) {
+                    const nxt = lines[i + 1].trim();
+                    if (/^[A-ZÑ0-9\s]{2,}$/.test(nxt)) { estados = nxt; i++; }
+                }
+                if (!result[currentSolicitud]) result[currentSolicitud] = [];
+                const ais = { numero: norm, descripcion, estados };
+                result[currentSolicitud].push(ais);
+                lastAislamiento = ais;
+            } else {
+                // Nuevo identificador de Solicitud
+                currentSolicitud = norm;
+                lastAislamiento = null;
+                if (!result[currentSolicitud]) result[currentSolicitud] = [];
+            }
+        } else {
+            // Línea sin número: posible lista de estados que aplica al último aislamiento
+            if (/^[A-ZÑ0-9\s]{2,}$/.test(line) && lastAislamiento) {
+                lastAislamiento.estados = (lastAislamiento.estados ? lastAislamiento.estados + ' ' : '') + line;
+            }
+        }
+    }
+
+    return result;
+}
+
+// Asignar aislamientos a los trabajos en memoria buscando coincidencias por número de Solicitud
+function asignarAislamientosATrabajos() {
+    if (trabajos.length === 0) return;
+
+    const normalize = (s) => {
+        if (!s) return '';
+        const digits = String(s).replace(/\D/g, '');
+        return digits.replace(/^0+/, '') || digits;
+    };
+
+    trabajos.forEach(trabajo => {
+        const solRaw = String(trabajo['Solicitud'] || '').trim();
+        const sol = normalize(solRaw);
+
+        let matches = [];
+        if (aislamientosPorSolicitud.has(sol)) matches = aislamientosPorSolicitud.get(sol);
+        else {
+            // intentar buscar claves tocadas (con/ sin ceros)
+            for (const [k, arr] of aislamientosPorSolicitud.entries()) {
+                if (normalize(k) === sol) { matches = arr; break; }
+            }
+        }
+
+        // Filtrar solo aislamientos que empiecen por '3' — por seguridad
+        matches = (matches || []).filter(a => String(a.numero || '').startsWith('3'));
+
+        trabajo.aislamientos = matches;
+    });
 }
 
 // Manejar inicio de arrastre (desde el listado)
@@ -1948,7 +2092,13 @@ function obtenerDatosCompletos() {
         // Añadir campo "Requiere Descargo" (Sí/No) basado en Utilización = YU1
         const requiereDescargo = trabajo.requiereDescargo === true ? 'Sí' : 'No';
         fila.push(requiereDescargo);
-        
+
+        // Añadir columna con aislamientos concatenados (si existen)
+        const solicitudClave = String(trabajo['Solicitud'] || '').trim();
+        const aislamientosArr = aislamientosPorSolicitud.get(solicitudClave) || [];
+        const aislamientosStr = aislamientosArr.map(a => `${a.numero}: ${a.descripcion} [${a.estados}]`).join(' | ');
+        fila.push(aislamientosStr);
+
         datosExportar.push(fila);
     });
     
@@ -1973,6 +2123,7 @@ function exportarExcel() {
         colWidths.push({ wch: 15 }); // Para la columna "Actualizada fecha"
         colWidths.push({ wch: 15 }); // Para la columna "Estado permiso"
         colWidths.push({ wch: 18 }); // Para la columna "Requiere Descargo"
+        colWidths.push({ wch: 40 }); // Para la columna "Aislamientos"
         ws['!cols'] = colWidths;
         
         XLSX.utils.book_append_sheet(wb, ws, 'Trabajos con Fechas');
@@ -2024,11 +2175,19 @@ async function subirDatosSupabase() {
         uploadSupabaseBtn.innerText = 'Subiendo...';
         uploadSupabaseBtn.disabled = true;
 
+        // Si estamos subiendo la carga cruda (ultimoJsonData), incluir los aislamientos como campo adicional
+        const payload = { data: datos };
+        if (aislamientosPorSolicitud && aislamientosPorSolicitud.size > 0) {
+            // Convertir map a objeto simple
+            const aisObj = {};
+            aislamientosPorSolicitud.forEach((arr, key) => { aisObj[key] = arr; });
+            payload.aislamientos = aisObj;
+        }
+
         const { error } = await supabaseClient
             .from('backup_excel')
             .insert([
-                { data: datos } // Supabase generará created_at automáticamente si está configurado, o añadimos
-                // { data: datos, created_at: new Date() }
+                payload
             ]);
             
         if (error) throw error;
@@ -2075,6 +2234,13 @@ async function leerDatosSupabase(param) {
 
         const record = data[0];
         const jsonData = record.data;
+        // Si el registro contiene aislamientos, cargarlos en memoria
+        if (record.aislamientos) {
+            aislamientosPorSolicitud.clear();
+            Object.keys(record.aislamientos).forEach(k => {
+                aislamientosPorSolicitud.set(k, record.aislamientos[k]);
+            });
+        }
         console.log("Datos recibidos de Supabase:", jsonData);
 
         // Mostrar fecha de los datos
@@ -2098,6 +2264,8 @@ async function leerDatosSupabase(param) {
 
         // Procesar datos (Reutilizamos la lógica de carga de archivo)
         procesarDatos(jsonData);
+        // Si cargamos aislamientos desde el registro, asignarlos a los trabajos
+        asignarAislamientosATrabajos();
         
         // Distribuir trabajos en calendario
         distribuirTrabajos();
