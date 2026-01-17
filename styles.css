@@ -321,6 +321,54 @@ body {
     overflow: hidden;
 }
 
+/* Botones y controles en la parte superior de la barra lateral */
+.trabajos-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.trabajos-actions .sidebar-file-input {
+    padding: 6px 10px;
+    background: #667eea;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.trabajos-actions .sidebar-file-input input[type="file"] {
+    display: none;
+}
+
+.trabajos-actions .sidebar-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.trabajos-actions .sidebar-buttons .export-btn,
+.trabajos-actions .sidebar-buttons .supabase-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.info-datos-nube {
+    font-size: 0.85em;
+    color: #333;
+    background: #e8f5e9;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #c8e6c9;
+}
+
 /* Filtro de texto para trabajos pendientes */
 .filtro-texto-container {
     display: flex;
