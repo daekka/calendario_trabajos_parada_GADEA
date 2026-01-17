@@ -29,6 +29,35 @@
 .badge-otro {
     background: #607d8b;
 }
+/* Resumen de conteos por aislamiento */
+.aislamiento-resumen {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.badge-aislamiento-resumen {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #fff;
+}
+.badge-aislamiento-resumen.badge-total {
+    background: #607d8b;
+}
+.badge-aislamiento-resumen.badge-autorizado {
+    background: #43a047;
+}
+.badge-aislamiento-resumen.badge-aprobado {
+    background: #ff9800;
+}
+.badge-aislamiento-resumen.badge-pendiente {
+    background: #bdbdbd;
+    color: #333;
+}
 /* ==================== ESTILOS PESTAÑA AISLAMIENTOS ==================== */
 .aislamientos-section {
     display: flex;

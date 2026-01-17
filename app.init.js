@@ -182,16 +182,24 @@ document.querySelectorAll('.tab-button').forEach(button => {
         // Filtrar por número si hay filtro
         let aislamientosFiltrados = Array.from(aislamientosMap.entries());
         if (filtroNumero) {
-            aislamientosFiltrados = aislamientosFiltrados.filter(([numero]) => numero.includes(filtroNumero));
+            const tokensNumero = filtroNumero.split(/\s+/).filter(Boolean);
+            if (tokensNumero.length > 0) {
+                aislamientosFiltrados = aislamientosFiltrados.filter(([numero]) => {
+                    return tokensNumero.some(t => numero.includes(t));
+                });
+            }
         }
         // Filtrar por texto (AND) si hay texto
         if (filtroTexto) {
-            const textoFiltro = filtroTexto.toLowerCase();
-            aislamientosFiltrados = aislamientosFiltrados.filter(([_, data]) => {
-                const desc = (data.descripcion || '').toLowerCase();
-                const est = (data.estados || '').toLowerCase();
-                return (desc + ' ' + est).includes(textoFiltro);
-            });
+            const tokens = filtroTexto.toLowerCase().split(/\s+/).filter(Boolean);
+            if (tokens.length > 0) {
+                aislamientosFiltrados = aislamientosFiltrados.filter(([_, data]) => {
+                    const desc = (data.descripcion || '').toLowerCase();
+                    const est = (data.estados || '').toLowerCase();
+                    const haystack = (desc + ' ' + est);
+                    return tokens.every(t => haystack.includes(t));
+                });
+            }
         }
         if (aislamientosFiltrados.length === 0) {
             aislamientosContainer.innerHTML = '<p class="empty-message">No hay aislamientos que coincidan</p>';
@@ -199,11 +207,11 @@ document.querySelectorAll('.tab-button').forEach(button => {
         }
         let html = '';
         for (const [numero, data] of aislamientosFiltrados) {
-            html += `<div class="aislamiento-item">`;
-            html += `<span class="aislamiento-numero">${numero}</span> <span class="aislamiento-descripcion">${data.descripcion}</span> <span class="aislamiento-estados">${data.estados}</span>`;
-            html += `<div class="aislamiento-solicitudes">`;
-            html += `<ul>`;
-            for (const solicitud of data.solicitudes) {
+            const solicitudes = data.solicitudes || [];
+            const resumen = { total: solicitudes.length, autorizado: 0, aprobado: 0, pendiente: 0 };
+            const infoSolicitudes = [];
+
+            for (const solicitud of solicitudes) {
                 // Buscar trabajo asociado a la solicitud
                 let textoBreve = '';
                 let estado = '';
@@ -216,6 +224,27 @@ document.querySelectorAll('.tab-button').forEach(button => {
                         break;
                     }
                 }
+                if (estado === 'AUTORIZADO') resumen.autorizado++;
+                else if (estado === 'APROBADO') resumen.aprobado++;
+                else if (estado === 'PENDIENTE') resumen.pendiente++;
+
+                infoSolicitudes.push({ solicitud, textoBreve, estado });
+            }
+
+            html += `<div class="aislamiento-item">`;
+            html += `<span class="aislamiento-numero">${numero}</span> <span class="aislamiento-descripcion">${data.descripcion}</span> <span class="aislamiento-estados">${data.estados}</span>`;
+            html += `<div class="aislamiento-resumen">`;
+            html += `<span class="badge-aislamiento-resumen badge-total">Total: ${resumen.total}</span>`;
+            html += `<span class="badge-aislamiento-resumen badge-autorizado">Autorizados: ${resumen.autorizado}</span>`;
+            html += `<span class="badge-aislamiento-resumen badge-aprobado">Aprobados: ${resumen.aprobado}</span>`;
+            html += `<span class="badge-aislamiento-resumen badge-pendiente">Pendientes: ${resumen.pendiente}</span>`;
+            html += `</div>`;
+            html += `<div class="aislamiento-solicitudes">`;
+            html += `<ul>`;
+            for (const info of infoSolicitudes) {
+                const solicitud = info.solicitud;
+                const textoBreve = info.textoBreve;
+                const estado = info.estado;
                 // Preparar badges y contenido en columnas: izquierda = texto (truncable), derecha = badges
                 let deptHtml = '';
                 try {
