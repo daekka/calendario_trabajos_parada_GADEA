@@ -53,6 +53,8 @@ function calcularCyMPParaTrabajo(indice) {
 }
 
 // Referencias a elementos del DOM
+const aislamientosContainer = document.getElementById('aislamientosContainer');
+const filtroAislamientoInput = document.getElementById('filtroAislamientoInput');
 const fileInput = document.getElementById('fileInput');
 const fileTxtInput = document.getElementById('fileTxtInput');
 const exportBtn = document.getElementById('exportBtn');
@@ -256,11 +258,100 @@ document.querySelectorAll('.tab-button').forEach(button => {
         if (tabName === 'gantt') {
             generarGantt();
         }
-        
         // Si se cambia a la pestaña Listado, generar el listado
         if (tabName === 'listado') {
             generarListado();
         }
+        // Si se cambia a la pestaña Aislamientos, generar el listado de aislamientos
+        if (tabName === 'aislamientos') {
+            renderizarAislamientos();
+        }
+    // Renderizar listado de aislamientos con solicitudes asociadas (formato árbol)
+    function renderizarAislamientos() {
+        if (!aislamientosContainer) return;
+        // Si no hay datos cargados
+        if (!aislamientosPorSolicitud || aislamientosPorSolicitud.size === 0) {
+            aislamientosContainer.innerHTML = '<p class="empty-message">No hay aislamientos cargados</p>';
+            return;
+        }
+        // Obtener filtro
+        const filtro = filtroAislamientoInput ? filtroAislamientoInput.value.trim() : '';
+        // Map: numero aislamiento -> { descripcion, estados, solicitudes: [id, ...] }
+        const aislamientosMap = new Map();
+        // Recorrer todas las solicitudes y sus aislamientos
+        for (const [solicitud, aislamientosArr] of aislamientosPorSolicitud.entries()) {
+            for (const a of aislamientosArr) {
+                if (!aislamientosMap.has(a.numero)) {
+                    aislamientosMap.set(a.numero, {
+                        descripcion: a.descripcion,
+                        estados: a.estados,
+                        solicitudes: []
+                    });
+                }
+                aislamientosMap.get(a.numero).solicitudes.push(solicitud);
+            }
+        }
+        // Filtrar por número si hay filtro
+        let aislamientosFiltrados = Array.from(aislamientosMap.entries());
+        if (filtro) {
+            aislamientosFiltrados = aislamientosFiltrados.filter(([numero]) => numero.includes(filtro));
+        }
+        if (aislamientosFiltrados.length === 0) {
+            aislamientosContainer.innerHTML = '<p class="empty-message">No hay aislamientos que coincidan</p>';
+            return;
+        }
+        let html = '';
+        for (const [numero, data] of aislamientosFiltrados) {
+            html += `<div class="aislamiento-item">`;
+            html += `<span class="aislamiento-numero">${numero}</span> <span class="aislamiento-descripcion">${data.descripcion}</span> <span class="aislamiento-estados">${data.estados}</span>`;
+            html += `<div class="aislamiento-solicitudes">`;
+            html += `<ul>`;
+            for (const solicitud of data.solicitudes) {
+                // Buscar trabajo asociado a la solicitud
+                let textoBreve = '';
+                let estado = '';
+                for (const t of trabajos) {
+                    if (t && t['Solicitud'] && t['Solicitud'].toString().trim() === solicitud) {
+                        textoBreve = t['Texto breve'] || '';
+                        // Buscar estado del permiso si existe
+                        const idx = trabajos.indexOf(t);
+                        estado = estadosPermisos.get(idx) || '';
+                        break;
+                    }
+                }
+                html += `<li class="aislamiento-solicitud-item"><b>${solicitud}</b>`;
+                if (textoBreve) html += ` — <span class="aislamiento-solicitud-txt">${textoBreve}</span>`;
+                if (estado) {
+                    let badgeClass = 'badge-estado';
+                    if (estado === 'AUTORIZADO') badgeClass += ' badge-autorizado';
+                    else if (estado === 'APROBADO') badgeClass += ' badge-aprobado';
+                    else if (estado === 'PENDIENTE') badgeClass += ' badge-pendiente';
+                    else badgeClass += ' badge-otro';
+                    html += ` <span class="${badgeClass}">${estado}</span>`;
+                }
+                html += `</li>`;
+            }
+            html += `</ul>`;
+            html += `</div>`;
+            html += `</div>`;
+        }
+        aislamientosContainer.innerHTML = html;
+    }
+// Renderizar aislamientos al cargar si ya hay datos
+window.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('aislamientosTab')) {
+        renderizarAislamientos();
+    }
+});
+
+// Si cargas aislamientos desde fichero, llama a renderizarAislamientos() después de cargar los datos
+
+    // Filtro de aislamientos por número
+    if (filtroAislamientoInput) {
+        filtroAislamientoInput.addEventListener('input', () => {
+            renderizarAislamientos();
+        });
+    }
     });
 });
 
@@ -1752,6 +1843,10 @@ function handleTxtUpload(event) {
             mostrarTrabajos();
             // Refrescar días mostrados
             trabajosConFechas.forEach((_, fecha) => actualizarDiaCalendario(fecha));
+            // Refrescar pestaña de aislamientos si está visible o no
+            if (typeof renderizarAislamientos === 'function') {
+                renderizarAislamientos();
+            }
         } else {
             alert('No se pudieron parsear los aislamientos');
         }
@@ -2630,6 +2725,7 @@ function generarListado() {
         html += '<th style="width: 100px;">Solicitud</th>';
         html += '<th style="width: 120px;">CyMP</th>';
         html += '<th>Texto breve</th>';
+        html += '<th style="width: 400px;">Aislamientos</th>';
         html += '<th style="width: 80px; text-align: center;">Descargo</th>';
         html += '<th style="width: 80px; text-align: center;">Estado</th>';
         html += '</tr></thead>';
@@ -2675,6 +2771,16 @@ function generarListado() {
             html += `<td>${solicitud}</td>`;
             html += `<td>${cympRow}</td>`;
             html += `<td>${textoBreve}</td>`;
+            // Mostrar aislamientos asociados a la solicitud
+            const solicitudKey = (trabajo['Solicitud'] || '').toString().trim();
+            const aislamientos = aislamientosPorSolicitud.get(solicitudKey) || [];
+            let aislamientosHtml = '';
+            if (aislamientos.length === 0) {
+                aislamientosHtml = '<span class="aislamiento-vacio">—</span>';
+            } else {
+                aislamientosHtml = aislamientos.map(a => `<div><b>${a.numero}</b>: ${a.descripcion} <br><small>${a.estados}</small></div>`).join('<hr style="border:none;border-top:1px solid #eee;margin:4px 0;">');
+            }
+            html += `<td>${aislamientosHtml}</td>`;
             html += `<td style="text-align: center;">${iconoDescargo}</td>`;
             html += `<td style="text-align: center;"><span class="estado-check ${claseEstado}">${iconoEstado}</span></td>`;
             html += '</tr>';

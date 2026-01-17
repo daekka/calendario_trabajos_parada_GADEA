@@ -1,3 +1,96 @@
+/* Badge para estado de solicitud en aislamientos */
+.badge-estado {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #fff;
+    margin-left: 8px;
+    background: #888;
+    vertical-align: middle;
+}
+.badge-autorizado {
+    background: #43a047;
+}
+.badge-aprobado {
+    background: #ff9800;
+}
+.badge-pendiente {
+    background: #bdbdbd;
+    color: #333;
+}
+.badge-otro {
+    background: #607d8b;
+}
+/* ==================== ESTILOS PESTAÑA AISLAMIENTOS ==================== */
+.aislamientos-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.aislamientos-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.filtro-aislamiento-input {
+    padding: 6px 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+.filtro-aislamiento-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+.aislamientos-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+    padding: 18px 20px;
+    min-height: 120px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.aislamiento-item {
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+.aislamiento-numero {
+    font-weight: bold;
+    color: #667eea;
+    font-size: 1.1em;
+}
+.aislamiento-descripcion {
+    margin-left: 8px;
+    color: #333;
+}
+.aislamiento-estados {
+    font-size: 0.95em;
+    color: #888;
+    margin-left: 8px;
+}
+.aislamiento-solicitudes {
+    margin-top: 6px;
+    margin-left: 18px;
+    font-size: 0.98em;
+}
+.aislamiento-solicitud-item {
+    margin-bottom: 2px;
+    color: #444;
+}
 .trabajo-en-calendario.estado-aprobado {
     border-left-color: orange;
 }

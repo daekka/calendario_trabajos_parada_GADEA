@@ -89,6 +89,7 @@
                         <button class="tab-button active" data-tab="calendario">📅 Calendario</button>
                         <button class="tab-button" data-tab="listado">📋 Listado</button>
                         <button class="tab-button" data-tab="gantt">📊 Gantt</button>
+                        <button class="tab-button" data-tab="aislamientos">🔒 Aislamientos</button>
                     </div>
                         <div class="top-right-actions-inline">
                             <a class="action-btn aviso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#MaintenanceNotification-create?sap-ui-tech-hint=WDA" target="_blank" rel="noopener noreferrer" title="Crear Aviso">🔔 Crear Aviso</a>
@@ -126,6 +127,18 @@
                     <div class="gantt-section">
                         <div id="ganttContainer" class="gantt-container">
                             <p class="empty-message">Carga un archivo Excel para ver el gráfico Gantt</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="aislamientosTab">
+                    <div class="aislamientos-section">
+                        <div class="aislamientos-controls">
+                            <label for="filtroAislamientoInput">Filtrar por número:</label>
+                            <input type="text" id="filtroAislamientoInput" class="filtro-aislamiento-input" placeholder="Número de aislamiento..." />
+                        </div>
+                        <div id="aislamientosContainer" class="aislamientos-container">
+                            <p class="empty-message">No hay aislamientos cargados</p>
                         </div>
                     </div>
                 </div>
