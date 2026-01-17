@@ -153,6 +153,17 @@ if (toggleTrabajosBtn) {
 
 if (actualizarCalendarioBtn) {
     actualizarCalendarioBtn.addEventListener('click', actualizarCalendario);
+    actualizarCalendarioBtn.addEventListener('click', async () => {
+        // Releer datos de la nube antes de actualizar el calendario
+        // Si Supabase no está configurado, leerDatosSupabase manejará la situación.
+        try {
+            await leerDatosSupabase(false);
+        } catch (err) {
+            console.warn('Error al releer datos desde la nube:', err);
+            // Continuar con la actualización local aunque falle la lectura remota
+        }
+        actualizarCalendario();
+    });
 }
 
 // Debounce para resize
