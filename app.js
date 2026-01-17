@@ -2270,13 +2270,18 @@ async function subirDatosSupabase() {
         uploadSupabaseBtn.innerText = 'Subiendo...';
         uploadSupabaseBtn.disabled = true;
 
-        // Si estamos subiendo la carga cruda (ultimoJsonData), incluir los aislamientos como campo adicional
-        const payload = { data: datos };
+        // Preparar payload para subir. Mantener `data` como el contenido principal.
+        // Si existen aislamientos, los embebemos dentro de `data` para evitar depender
+        // de una columna separada `aislamientos` en la tabla de Supabase.
+        let payload;
         if (aislamientosPorSolicitud && aislamientosPorSolicitud.size > 0) {
             // Convertir map a objeto simple
             const aisObj = {};
             aislamientosPorSolicitud.forEach((arr, key) => { aisObj[key] = arr; });
-            payload.aislamientos = aisObj;
+            // Nuevo formato: data -> { rows: <array de filas>, aislamientos: <obj> }
+            payload = { data: { rows: datos, aislamientos: aisObj } };
+        } else {
+            payload = { data: datos };
         }
 
         const { error } = await supabaseClient
@@ -2328,9 +2333,22 @@ async function leerDatosSupabase(param) {
         }
 
         const record = data[0];
-        const jsonData = record.data;
-        // Si el registro contiene aislamientos, cargarlos en memoria
-        if (record.aislamientos) {
+        // Normalizar formato de `data`: puede ser un array (rows) o un objeto con {rows, aislamientos}
+        let jsonData = record.data;
+        // Compatibilidad: si `data` es un objeto con `rows`, extraer rows
+        if (jsonData && typeof jsonData === 'object' && !Array.isArray(jsonData) && jsonData.rows) {
+            // Cargar aislamientos embebidos dentro de data
+            if (jsonData.aislamientos) {
+                aislamientosPorSolicitud.clear();
+                Object.keys(jsonData.aislamientos).forEach(k => {
+                    aislamientosPorSolicitud.set(k, jsonData.aislamientos[k]);
+                });
+            }
+            jsonData = jsonData.rows;
+        }
+
+        // Compatibilidad con el formato anterior: aislamientos como columna separada en el registro
+        if (record.aislamientos && (!aislamientosPorSolicitud || aislamientosPorSolicitud.size === 0)) {
             aislamientosPorSolicitud.clear();
             Object.keys(record.aislamientos).forEach(k => {
                 aislamientosPorSolicitud.set(k, record.aislamientos[k]);
