@@ -2496,7 +2496,7 @@ function generarListado() {
         html += '<th style="width: 100px;">Solicitud</th>';
         html += '<th style="width: 120px;">CyMP</th>';
         html += '<th>Texto breve</th>';
-        html += '<th style="width: 400px;">Aislamientos</th>';
+        html += '<th style="width: 655px;">Aislamientos</th>';
         html += '<th style="width: 80px; text-align: center;">Descargo</th>';
         html += '<th style="width: 80px; text-align: center;">Estado</th>';
         html += '</tr></thead>';
