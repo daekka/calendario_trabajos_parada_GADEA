@@ -183,13 +183,17 @@ function desplazarListadoAHoy() {
     const separador = listadoContainer.querySelector(`.fecha-separator[data-fecha="${hoyStr}"]`);
     if (!separador) return;
 
+    const zoomStr = getComputedStyle(document.documentElement).getPropertyValue('--app-zoom');
+    const zoom = Number.parseFloat(zoomStr) || 1;
+    const escala = zoom > 0 ? zoom : 1;
+
     const contRect = listadoContainer.getBoundingClientRect();
     const sepRect = separador.getBoundingClientRect();
     const th = listadoContainer.querySelector('.listado-table th');
-    const alturaCabecera = th ? th.getBoundingClientRect().height : 0;
+    const alturaCabecera = th ? th.getBoundingClientRect().height / escala : 0;
     const margenSeguridad = 8;
 
-    const offsetTop = sepRect.top - contRect.top;
+    const offsetTop = (sepRect.top - contRect.top) / escala;
     const targetTop = listadoContainer.scrollTop + offsetTop - alturaCabecera - margenSeguridad;
 
     listadoContainer.scrollTo({
