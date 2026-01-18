@@ -67,7 +67,6 @@ const trabajosList = document.getElementById('trabajosList');
 const calendarioContainer = document.getElementById('calendarioContainer');
 const fechaInicio = document.getElementById('fechaInicio');
 const fechaFin = document.getElementById('fechaFin');
-const actualizarCalendarioBtn = document.getElementById('actualizarCalendarioBtn');
 // Referencias Dropdown
 const dropdownBtn = document.getElementById('dropdownBtn');
 const dropdownMenu = document.getElementById('dropdownMenu');

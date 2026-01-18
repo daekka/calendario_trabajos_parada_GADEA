@@ -10,38 +10,6 @@
 </head>
 <body>
     <div class="container">
-        <div class="upload-section">
-            <span id="infoDatosNube" style="display: none; margin-left: 5px; font-size: 0.85em; color: #333; background: #e8f5e9; padding: 5px 10px; border-radius: 4px; border: 1px solid #c8e6c9;"></span>
-            <div class="fecha-controls">
-                <label class="fecha-label">Tipo:</label>
-                <div class="dropdown" id="filtroTipoDropdown">
-                    <button class="dropdown-toggle" id="dropdownBtn">TODOS</button>
-                    <div class="dropdown-menu" id="dropdownMenu">
-                        <label class="dropdown-item">
-                            <input type="checkbox" value="TODOS" checked> TODOS
-                        </label>
-                        <label class="dropdown-item filtro-mto-electrico">
-                            <input type="checkbox" value="MTO_ELECTRICO"> Mto. Eléctrico
-                        </label>
-                        <label class="dropdown-item filtro-mto-mecanico">
-                            <input type="checkbox" value="MTO_MECANICO"> Mto. Mecánico
-                        </label>
-                        <label class="dropdown-item filtro-ge">
-                            <input type="checkbox" value="GE"> GE
-                        </label>
-                        <label class="dropdown-item filtro-mto-ic">
-                            <input type="checkbox" value="MTO_IC"> Mto. I&C
-                        </label>
-                        <label class="dropdown-item filtro-otros">
-                            <input type="checkbox" value="OTROS"> OTROS
-                        </label>
-                    </div>
-                </div>
-
-                <button id="actualizarCalendarioBtn" class="actualizar-btn">Actualizar calendario</button>
-            </div>
-        </div>
-
         <div class="main-content">
             <div class="trabajos-section" id="trabajosSection">
                 <div class="trabajos-header">
@@ -96,12 +64,41 @@
                         
                         <button class="tab-button" data-tab="aislamientos">🔒 Aislamientos</button>
                     </div>
+                    <div class="top-controls-right">
                         <div class="top-right-actions-inline">
                             <a class="action-btn aviso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#MaintenanceNotification-create?sap-ui-tech-hint=WDA" target="_blank" rel="noopener noreferrer" title="Crear Aviso">🔔 Crear Aviso</a>
                             <a class="action-btn permiso-btn" href="https://gadea.naturgy.com/sap/bc/ui5_ui5/ui2/ushell/shells/abap/FioriLaunchpad.html?sap-client=300&sap-language=ES#GadeaWCM-openWCLO?sap-ui-tech-hint=GUI" target="_blank" rel="noopener noreferrer" title="Crear Permiso/CyMP">🛠️ Crear Permiso/CyMP</a>
                             <!--<button id="exportBtnTop" class="action-btn export-top-btn" title="Guardar Excel" disabled>💾 Guardar Excel</button> -->
                         </div>
                         <div id="estadisticasTrabajos" class="estadisticas-trabajos"></div>
+                        <span id="infoDatosNube" style="display: none; margin-left: 0; font-size: 0.85em; color: #333; background: #e8f5e9; padding: 5px 10px; border-radius: 4px; border: 1px solid #c8e6c9;"></span>
+                        <div class="fecha-controls">
+                            <label class="fecha-label">Tipo:</label>
+                            <div class="dropdown" id="filtroTipoDropdown">
+                                <button class="dropdown-toggle" id="dropdownBtn">TODOS</button>
+                                <div class="dropdown-menu" id="dropdownMenu">
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" value="TODOS" checked> TODOS
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-electrico">
+                                        <input type="checkbox" value="MTO_ELECTRICO"> Mto. Eléctrico
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-mecanico">
+                                        <input type="checkbox" value="MTO_MECANICO"> Mto. Mecánico
+                                    </label>
+                                    <label class="dropdown-item filtro-ge">
+                                        <input type="checkbox" value="GE"> GE
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-ic">
+                                        <input type="checkbox" value="MTO_IC"> Mto. I&C
+                                    </label>
+                                    <label class="dropdown-item filtro-otros">
+                                        <input type="checkbox" value="OTROS"> OTROS
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="tab-content active" id="calendarioTab">

@@ -211,7 +211,7 @@ body {
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-left: 15px;
+    margin-left: 0;
 }
 
 .sidebar-fecha-controls {
@@ -670,6 +670,14 @@ body {
     border-bottom: 2px solid #e0e0e0;
     flex-shrink: 0;
     gap: 20px;
+}
+
+.top-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    flex-wrap: wrap;
 }
 
 .tabs {

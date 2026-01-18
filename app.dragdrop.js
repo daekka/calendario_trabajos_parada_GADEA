@@ -412,7 +412,7 @@ async function leerDatosSupabase(param) {
         // Mostrar fecha de los datos
         if (infoDatosNube) {
             const fechaData = new Date(record.created_at).toLocaleString();
-            infoDatosNube.innerHTML = `☁️ Última actualización (🖐) GADEA: <strong>${fechaData}</strong>`;
+            infoDatosNube.innerHTML = `☁️ GADEA: <strong>${fechaData}</strong>`;
             infoDatosNube.style.display = 'inline-block';
         }
         
