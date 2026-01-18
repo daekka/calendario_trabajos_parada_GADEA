@@ -82,6 +82,9 @@ function generarListado() {
     // Nombres de días y meses en español
     const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     
     trabajosPorFecha.forEach((items, fecha) => {
         // Crear separador de fecha
@@ -90,7 +93,8 @@ function generarListado() {
         const diaSemana = diasSemana[fechaObj.getDay()];
         const nombreMes = meses[fechaObj.getMonth()];
         
-        html += `<div class="fecha-separator">${diaSemana} ${day} de ${nombreMes} ${year}</div>`;
+        const claseHoy = (fecha === hoyStr) ? ' fecha-hoy' : '';
+        html += `<div class="fecha-separator${claseHoy}" data-fecha="${fecha}">${diaSemana} ${day} de ${nombreMes} ${year}</div>`;
         
         // Crear tabla para los trabajos de este día
         html += '<table class="listado-table">';
@@ -166,6 +170,32 @@ function generarListado() {
     });
     
     listadoContainer.innerHTML = html;
+    // Desplazar a la fecha actual en el listado
+    setTimeout(desplazarListadoAHoy, 50);
+}
+
+// Desplazar el listado al separador del día actual
+function desplazarListadoAHoy() {
+    if (!listadoContainer) return;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    const separador = listadoContainer.querySelector(`.fecha-separator[data-fecha="${hoyStr}"]`);
+    if (!separador) return;
+
+    const contRect = listadoContainer.getBoundingClientRect();
+    const sepRect = separador.getBoundingClientRect();
+    const th = listadoContainer.querySelector('.listado-table th');
+    const alturaCabecera = th ? th.getBoundingClientRect().height : 0;
+    const margenSeguridad = 8;
+
+    const offsetTop = sepRect.top - contRect.top;
+    const targetTop = listadoContainer.scrollTop + offsetTop - alturaCabecera - margenSeguridad;
+
+    listadoContainer.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
+    });
 }
 
 // Imprimir el listado
