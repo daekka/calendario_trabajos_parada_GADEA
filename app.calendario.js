@@ -163,19 +163,19 @@ function actualizarEstadisticasTrabajos() {
     // Crear HTML de estadísticas
     estadisticasContainer.innerHTML = `
         <div class="estadistica-item">
-            <span class="estadistica-label">Total:</span>
+            <span class="estadistica-label">TOT:</span>
             <span class="estadistica-valor">${totalTrabajos}</span>
         </div>
         <div class="estadistica-item estado-autorizado" title="Permiso de trabajo aprobado con todas las firmas">
-            <span class="estadistica-label">Autorizados:</span>
+            <span class="estadistica-label">AUTO:</span>
             <span class="estadistica-valor">${autorizados}</span>
         </div>
         <div class="estadistica-item estado-aprobado" title="Permiso de trabajo aprobado pendiente de alguna firma">
-            <span class="estadistica-label">Aprobados:</span>
+            <span class="estadistica-label">APRO:</span>
             <span class="estadistica-valor">${aprobados}</span>
         </div>
         <div class="estadistica-item estado-pendiente" title="Permiso de trabajo pendiente">
-            <span class="estadistica-label">Pendientes:</span>
+            <span class="estadistica-label">RESTO:</span>
             <span class="estadistica-valor">${pendientes}</span>
         </div>
     `;

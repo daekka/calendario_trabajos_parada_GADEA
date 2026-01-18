@@ -300,13 +300,13 @@ body {
 
 .dropdown-toggle {
     background-color: white;
-    padding: 6px 10px;
+    padding: 4px 8px;
     border: 2px solid #e0e0e0;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     text-align: left;
-    min-width: 150px;
+    min-width: 120px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -666,33 +666,37 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     border-bottom: 2px solid #e0e0e0;
     flex-shrink: 0;
-    gap: 20px;
+    gap: 12px;
 }
 
 .top-controls-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     margin-left: auto;
     flex-wrap: wrap;
 }
 
+.top-controls-right .fecha-label {
+    font-size: 12px;
+}
+
 .tabs {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     flex: 1;
 }
 
 .tab-button {
-    padding: 12px 24px;
+    padding: 8px 16px;
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: #666;
     transition: all 0.3s ease;
@@ -713,20 +717,20 @@ body {
 
 .estadisticas-trabajos {
     display: flex;
-    gap: 15px;
+    gap: 10px;
     align-items: center;
-    padding: 8px 15px;
+    padding: 6px 10px;
     background: #f8f9fa;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 12px;
     flex-shrink: 0;
 }
 
 .estadistica-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
+    gap: 4px;
+    padding: 3px 8px;
     border-radius: 6px;
     background: white;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -1617,7 +1621,7 @@ body {
 /* Botones alineados con las estadísticas en la misma fila */
 .top-right-actions-inline {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     margin-left: auto; /* empuja las estadísticas hacia la derecha junto a este contenedor */
 }
@@ -1626,14 +1630,14 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: linear-gradient(90deg, #667eea, #764ba2);
     color: white;
     text-decoration: none;
     border-radius: 6px;
     box-shadow: 0 6px 18px rgba(118,75,162,0.18);
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
