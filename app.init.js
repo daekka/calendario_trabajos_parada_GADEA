@@ -1,3 +1,8 @@
+// Ajustar zoom inicial del contenido (no el zoom del navegador)
+window.addEventListener('DOMContentLoaded', () => {
+    document.documentElement.style.setProperty('--app-zoom', '0.85');
+});
+
 // Event listeners
 fileInput.addEventListener('change', handleFileUpload);
 if (fileTxtInput) fileTxtInput.addEventListener('change', handleTxtUpload);
