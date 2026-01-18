@@ -291,19 +291,24 @@ function generarMesCalendario(ano, mes, diaInicio = null, diaFin = null, esPrime
         }
         diaElement.dataset.fecha = fechaStr;
         
+        const cabeceraDia = document.createElement('div');
+        cabeceraDia.className = 'dia-header';
+
         const numeroDia = document.createElement('div');
         numeroDia.className = 'numero-dia';
         // Mostrar día/mes en formato "16/Ene" (mes en texto)
         const nombresMesesAbrev = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre   '];
         numeroDia.textContent = `${dia} de ${nombresMesesAbrev[mes]} de ${ano}`;
-        diaElement.appendChild(numeroDia);
-        // Contenedor para estadísticas del día (Autorizados / Resto)
+
+        // Contenedor para estadísticas del día (Autorizados del total)
         const estadisticaDia = document.createElement('div');
         estadisticaDia.className = 'estadistica-dia';
-        estadisticaDia.style.cssText = 'display:flex; gap:10px; margin:6px 0 10px 0; font-size:13px; align-items:center;';
         // Valores iniciales (se actualizarán en mostrarTrabajosEnDia)
-        estadisticaDia.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados"><strong>Autorizados:</strong> <span class="estadistica-valor">0</span></div><div class="estadistica-dia-item" title="Permisos no autorizados"> <strong>Resto:</strong> <span class="estadistica-valor">0</span></div>`;
-        diaElement.appendChild(estadisticaDia);
+        estadisticaDia.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados"><span class="estadistica-badge">0 de 0</span></div>`;
+
+        cabeceraDia.appendChild(numeroDia);
+        cabeceraDia.appendChild(estadisticaDia);
+        diaElement.appendChild(cabeceraDia);
         
         // Contenedor para trabajos del día
         const trabajosDia = document.createElement('div');
@@ -511,9 +516,8 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
                     const estado = (estadosPermisos.get(ind) || 'PENDIENTE');
                     if (estado === 'AUTORIZADO') autorizados++;
                 });
-                const resto = Math.max(0, total - autorizados);
                 // Actualizar HTML del bloque de estadísticas
-                estadisticaDiv.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados"><strong>Autorizados:</strong> <span class="estadistica-valor">${autorizados}</span></div><div class="estadistica-dia-item" title="Permisos no autorizados"> <strong>Resto:</strong> <span class="estadistica-valor">${resto}</span></div>`;
+                estadisticaDiv.innerHTML = `<div class="estadistica-dia-item" title="Permisos autorizados del total del día"><span class="estadistica-badge">${autorizados} de ${total}</span></div>`;
             }
         }
     } catch (err) {

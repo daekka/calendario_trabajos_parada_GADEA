@@ -937,6 +937,32 @@ body {
     font-size: 0.9em;
 }
 
+.dia-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.estadistica-dia {
+    font-size: 0.82em;
+    color: #444;
+    white-space: nowrap;
+}
+
+.estadistica-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eef1ff;
+    color: #3b4cca;
+    font-weight: 600;
+    font-size: 0.85em;
+    line-height: 1.2;
+    border: 1px solid #dbe1ff;
+}
+
 .trabajos-dia {
     display: flex;
     flex-direction: column;
