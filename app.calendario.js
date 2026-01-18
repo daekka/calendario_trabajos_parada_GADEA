@@ -64,6 +64,8 @@ function generarCalendario() {
     
     // Igualar ancho de todos los días después de renderizar
     setTimeout(igualarAnchoDias, 0);
+    // Desplazar a "hoy" para que se vea aunque haya zoom
+    setTimeout(desplazarCalendarioAHoy, 150);
 }
 
 // Función para igualar el ancho de todos los días del calendario
@@ -86,6 +88,33 @@ function igualarAnchoDias() {
     diasSemana.forEach(dia => {
         dia.style.minWidth = anchoFijo + 'px';
         dia.style.width = anchoFijo + 'px';
+    });
+}
+
+// Desplazar el scroll para centrar el día actual en la vista
+function desplazarCalendarioAHoy() {
+    const contenedorScroll = document.querySelector('.calendario-section');
+    const diaActual = document.querySelector('.dia-calendario.dia-actual');
+    if (!contenedorScroll || !diaActual) return;
+
+    const cabeceraDias = contenedorScroll.querySelector('.dias-semana');
+    const alturaCabecera = cabeceraDias ? cabeceraDias.getBoundingClientRect().height : 0;
+
+    const contRect = contenedorScroll.getBoundingClientRect();
+    const diaRect = diaActual.getBoundingClientRect();
+
+    const offsetLeft = diaRect.left - contRect.left;
+    const offsetTop = diaRect.top - contRect.top;
+
+    const targetLeft = contenedorScroll.scrollLeft + offsetLeft - (contenedorScroll.clientWidth / 2 - diaActual.clientWidth / 2);
+    // Alinear el inicio del día justo debajo de la cabecera sticky
+    const margenSeguridad = 8;
+    const targetTop = contenedorScroll.scrollTop + offsetTop - alturaCabecera - margenSeguridad;
+
+    contenedorScroll.scrollTo({
+        left: Math.max(0, targetLeft),
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
     });
 }
 
