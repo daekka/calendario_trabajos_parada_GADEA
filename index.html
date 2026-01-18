@@ -13,11 +13,6 @@
         <div class="upload-section">
             <span id="infoDatosNube" style="display: none; margin-left: 5px; font-size: 0.85em; color: #333; background: #e8f5e9; padding: 5px 10px; border-radius: 4px; border: 1px solid #c8e6c9;"></span>
             <div class="fecha-controls">
-                <label for="fechaInicio" class="fecha-label">Fecha inicio:</label>
-                <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-12" />
-                <label for="fechaFin" class="fecha-label">Fecha fin:</label>
-                <input type="date" id="fechaFin" class="fecha-input" value="2026-02-28" />
-                
                 <label class="fecha-label">Tipo:</label>
                 <div class="dropdown" id="filtroTipoDropdown">
                     <button class="dropdown-toggle" id="dropdownBtn">TODOS</button>
@@ -54,6 +49,16 @@
                     <button id="toggleTrabajosBtn" class="toggle-trabajos-btn" title="Ocultar/Mostrar trabajos">◀</button>
                 </div>
                 <div class="trabajos-content" id="trabajosContent">
+                    <div class="sidebar-fecha-controls">
+                        <div class="sidebar-fecha-row">
+                            <label for="fechaInicio" class="fecha-label">Fecha inicio:</label>
+                            <input type="date" id="fechaInicio" class="fecha-input" value="2026-01-12" />
+                        </div>
+                        <div class="sidebar-fecha-row">
+                            <label for="fechaFin" class="fecha-label">Fecha fin:</label>
+                            <input type="date" id="fechaFin" class="fecha-input" value="2026-02-28" />
+                        </div>
+                    </div>
                     <div class="trabajos-actions">
                         <label for="fileInput" class="file-input-label sidebar-file-input">
                             <span>📁 Leer archivo Excel Permisos</span>

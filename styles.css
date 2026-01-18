@@ -214,6 +214,28 @@ body {
     margin-left: 15px;
 }
 
+.sidebar-fecha-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.sidebar-fecha-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-fecha-row .fecha-label {
+    min-width: 90px;
+}
+
+.sidebar-fecha-controls .fecha-input {
+    width: 100%;
+    max-width: 180px;
+}
+
 .fecha-label {
     font-size: 14px;
     font-weight: 500;
