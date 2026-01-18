@@ -994,6 +994,10 @@ body {
     border-left-color: #28a745; /* Verde - Autorizado */
 }
 
+.trabajo-en-calendario.estado-aprobado {
+    border-left-color: #ff9800; /* Naranja - Aprobado */
+}
+
 /* Also ensure list items have the same colors if they have the class */
 .trabajo-item.tipo-mto-electrico { background-color: #90caf9; color: black; }
 .trabajo-item.tipo-mto-mecanico { background-color: #f48fb1; color: black; }
