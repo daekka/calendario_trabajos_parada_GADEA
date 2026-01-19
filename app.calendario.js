@@ -134,6 +134,7 @@ function actualizarEstadisticasTrabajos() {
     let autorizados = 0;
     let aprobados = 0;
     let pendientes = 0;
+    let finalizados = 0;
     
     // Contar solo trabajos asignados al calendario
     trabajosAsignados.forEach(indice => {
@@ -148,13 +149,15 @@ function actualizarEstadisticasTrabajos() {
             autorizados++;
         } else if (estado === 'APROBADO') {
             aprobados++;
+        } else if (estado === 'FINALIZADO') {
+            finalizados++;
         } else {
             pendientes++;
         }
     });
     
     // Si no hay trabajos asignados, mostrar mensaje
-    const totalTrabajos = autorizados + aprobados + pendientes;
+    const totalTrabajos = autorizados + aprobados + pendientes + finalizados;
     if (totalTrabajos === 0) {
         estadisticasContainer.innerHTML = '<span class="estadistica-texto">Sin trabajos asignados</span>';
         return;
@@ -173,6 +176,10 @@ function actualizarEstadisticasTrabajos() {
         <div class="estadistica-item estado-aprobado" title="Permiso de trabajo aprobado pendiente de alguna firma">
             <span class="estadistica-label">APRO:</span>
             <span class="estadistica-valor">${aprobados}</span>
+        </div>
+        <div class="estadistica-item estado-finalizado" title="Permisos finalizados (pendiente cierre en GADEA)">
+            <span class="estadistica-label">FIN:</span>
+            <span class="estadistica-valor">${finalizados}</span>
         </div>
         <div class="estadistica-item estado-pendiente" title="Permiso de trabajo pendiente">
             <span class="estadistica-label">RESTO:</span>
@@ -671,13 +678,15 @@ function mostrarTrabajosEnDia(contenedor, fechaStr) {
         trabajoElement.addEventListener('dragstart', handleDragStartCalendario);
         trabajoElement.addEventListener('dragend', handleDragEnd);
         
-        // Aplicar color según el estado del permiso
+        // Aplicar color según el estado del permiso (incluye FINALIZADO)
         const estadoPermiso = estadosPermisos.get(indice) || 'PENDIENTE';
         trabajoElement.dataset.estado = estadoPermiso;
         if (estadoPermiso === 'AUTORIZADO') {
             trabajoElement.classList.add('estado-autorizado');
         } else if (estadoPermiso === 'APROBADO') {
             trabajoElement.classList.add('estado-aprobado');
+        } else if (estadoPermiso === 'FINALIZADO') {
+            trabajoElement.classList.add('estado-finalizado');
         } else {
             trabajoElement.classList.add('estado-pendiente');
         }

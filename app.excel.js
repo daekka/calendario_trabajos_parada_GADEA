@@ -246,6 +246,9 @@ function procesarDatos(jsonData) {
                 estadosPermisos.set(trabajo._indice, 'AUTORIZADO');
             } else if (status === 'APRO') {
                 estadosPermisos.set(trabajo._indice, 'APROBADO');
+            } else if (status === 'FIN') {
+                // Nuevo estado: FIN -> FINALIZADO
+                estadosPermisos.set(trabajo._indice, 'FINALIZADO');
             } else {
                 estadosPermisos.set(trabajo._indice, 'PENDIENTE');
             }

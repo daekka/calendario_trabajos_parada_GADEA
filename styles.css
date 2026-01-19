@@ -29,6 +29,11 @@
 .badge-otro {
     background: #607d8b;
 }
+/* Badge para estado FINALIZADO */
+.badge-finalizado {
+    background: #000;
+    color: #fff;
+}
 /* Resumen de conteos por aislamiento */
 .aislamiento-resumen {
     margin-top: 6px;
@@ -167,6 +172,23 @@
 
 .trabajo-en-calendario.estado-pendiente {
     border-left-color: #bdbdbd;
+}
+
+/* Estado FINALIZADO: barra de la tarjeta en negro en vista calendario */
+.trabajo-en-calendario.estado-finalizado {
+    border-left-color: #000000; /* barra izquierda negra */
+    background: linear-gradient(90deg, rgba(0,0,0,0.05), rgba(0,0,0,0.03));
+}
+
+/* Listado: estilo para el icono/estado finalizado */
+.estado-check.finalizado {
+    font-size: 1.1em;
+    color: #000; /* icono negro */
+}
+
+/* Aislamientos: badge para FINALIZADO */
+.badge-aislamiento-resumen.badge-finalizado {
+    background: #000;
 }
 
  
@@ -784,6 +806,15 @@ body {
 .estadistica-item.estado-pendiente .estadistica-label,
 .estadistica-item.estado-pendiente .estadistica-valor {
     color: white;
+}
+
+/* Estadística FIN: fondo negro y texto blanco */
+.estadistica-item.estado-finalizado {
+    background: #000;
+}
+.estadistica-item.estado-finalizado .estadistica-label,
+.estadistica-item.estado-finalizado .estadistica-valor {
+    color: #fff;
 }
 
 .estadistica-texto {

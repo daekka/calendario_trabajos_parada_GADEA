@@ -135,6 +135,10 @@ function generarListado() {
             } else if (estadoPermiso === 'APROBADO') {
                 claseEstado = 'aprobado';
                 iconoEstado = '🟧';
+            } else if (estadoPermiso === 'FINALIZADO') {
+                claseEstado = 'finalizado';
+                // Símbolo cuadrado negro solicitado
+                iconoEstado = '◼️';
             }
             
             // Icono de descargo (aislamiento)

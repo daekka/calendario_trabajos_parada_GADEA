@@ -217,6 +217,10 @@ document.querySelectorAll('.tab-button').forEach(button => {
                 if (estado === 'AUTORIZADO') resumen.autorizado++;
                 else if (estado === 'APROBADO') resumen.aprobado++;
                 else if (estado === 'PENDIENTE') resumen.pendiente++;
+                else if (estado === 'FINALIZADO') {
+                    // Contar FINALIZADO dentro de 'aprobado' visualmente no, mantener separado si es necesario
+                    // No sumar a aprobado/autorizado/pendiente counts
+                }
 
                 infoSolicitudes.push({ solicitud, textoBreve, estado });
             }
@@ -262,8 +266,11 @@ document.querySelectorAll('.tab-button').forEach(button => {
                     if (estado === 'AUTORIZADO') badgeClass += ' badge-autorizado';
                     else if (estado === 'APROBADO') badgeClass += ' badge-aprobado';
                     else if (estado === 'PENDIENTE') badgeClass += ' badge-pendiente';
+                    else if (estado === 'FINALIZADO') badgeClass += ' badge-finalizado';
                     else badgeClass += ' badge-otro';
-                    estadoHtml = `<span class="${badgeClass}">${estado}</span>`;
+                    // Mostrar texto 'FINALIZADO' exactamente cuando corresponda
+                    const textoEstado = (estado === 'FINALIZADO') ? 'FINALIZADO' : estado;
+                    estadoHtml = `<span class="${badgeClass}">${textoEstado}</span>`;
                 }
 
                      const textoHtml = textoBreve ? ` — <span class="aislamiento-solicitud-txt">${textoBreve}</span>` : '';
