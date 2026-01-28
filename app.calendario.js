@@ -1,4 +1,13 @@
-﻿// Generar calendarios basado en las fechas seleccionadas
+﻿// Cargar datos de empresas por departamento (solo una vez)
+let EMPRESAS_DEPARTAMENTOS = null;
+function cargarEmpresasDepartamentos(callback) {
+    if (EMPRESAS_DEPARTAMENTOS) { callback(EMPRESAS_DEPARTAMENTOS); return; }
+    fetch('empresas_departamentos.json')
+        .then(r => r.json())
+        .then(data => { EMPRESAS_DEPARTAMENTOS = data; callback(data); })
+        .catch(() => { EMPRESAS_DEPARTAMENTOS = {}; callback({}); });
+}
+// Generar calendarios basado en las fechas seleccionadas
 function generarCalendario() {
     calendarioContainer.innerHTML = '';
     
@@ -851,9 +860,342 @@ function mostrarDetallesTrabajoContextMenu(indice, elemento, fechaStr) {
             <button id="btn-copiar-aislamientos" class="modal-btn modal-btn-copy" style="height:40px;">Copiar</button>
         </div>
         <div class="modal-actions">
+            <button id="btn-imprimir-cartel" class="modal-btn modal-btn-print" style="background:#2d7be5;color:#fff;">🖨️ Imprimir cartel</button>
             <button id="btn-cerrar-modal" class="modal-btn modal-btn-close">Cerrar</button>
         </div>
     `;
+    // --- Lógica para imprimir cartel ---
+    const btnImprimirCartel = modal.querySelector('#btn-imprimir-cartel');
+    btnImprimirCartel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const DEPARTAMENTO_LABELS = {
+            'MTO_ELECTRICO': 'Mto. Eléctrico',
+            'MTO_MECANICO': 'Mto. Mecánico',
+            'GE': 'GE',
+            'MTO_IC': 'Mto. I&C',
+            'OTROS': 'Otros'
+        };
+        const tipoMto = trabajo.tipoMantenimiento || 'OTROS';
+        const departamentoLabel = DEPARTAMENTO_LABELS[tipoMto] || trabajo['Departamento'] || 'Otros';
+        cargarEmpresasDepartamentos((empresas) => {
+            const arrDept = Array.isArray(empresas[departamentoLabel]) ? empresas[departamentoLabel] : [];
+            // Si el trabajo no tiene datos, usar los del primer elemento del array
+            const empresaDef = trabajo['Empresa'] || (arrDept[0] && arrDept[0].empresa) || '';
+            const responsableDef = trabajo['Responsable'] || (arrDept[0] && arrDept[0].responsable) || '';
+            const telefonoDef = trabajo['Telefono'] || (arrDept[0] && arrDept[0].telefono) || '';
+            mostrarModalCartelEditable({
+                descripcion: textoBreve,
+                departamento: departamentoLabel,
+                numero: `${solicitud} / ${orden}`,
+                empresa: empresaDef,
+                responsable: responsableDef,
+                telefono: telefonoDef
+            }, empresas);
+        });
+    });
+    // --- Fin lógica imprimir cartel ---
+    
+// Modal para editar e imprimir cartel con vista previa en tiempo real
+function mostrarModalCartelEditable(campos, empresasPorDept) {
+    // --- Configuración de modal y overlay ---
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = 9999;
+    const modal = document.createElement('div');
+    modal.className = 'modal-cartel';
+    modal.style.maxWidth = '900px';
+    modal.style.width = '90vw';
+    modal.style.background = '#222';
+    modal.style.color = '#fff';
+    modal.style.padding = '24px';
+    modal.style.borderRadius = '12px';
+    modal.style.boxShadow = '0 4px 32px #0008';
+    modal.style.position = 'relative';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'row';
+    modal.style.gap = '32px';
+
+    // --- Variables de datos ---
+    const imagenesSenales = [
+        'señales/riesgo electrico.png',
+        'señales/caida objetos.png'
+        // Añade más si es necesario
+    ];
+    let selectedLogos = [];
+    let deptos = empresasPorDept ? Object.keys(empresasPorDept) : [];
+
+    // --- Funciones auxiliares ---
+    function getEmpresasDept(depto) {
+        return (empresasPorDept && empresasPorDept[depto]) ? empresasPorDept[depto] : [];
+    }
+    function renderEmpresaResponsableTelefono(depto, empresaSel, responsableSel, telefonoSel) {
+        const empresas = getEmpresasDept(depto);
+        return `
+            <label>🏭 Empresa:<br>
+                <select id="cartel-empresa-select" style="width:324px;">
+                    ${empresas.map((e, i) => `<option value="${e.empresa}" data-resp="${e.responsable}" data-tel="${e.telefono}" ${empresaSel === e.empresa ? 'selected' : ''}>${e.empresa}</option>`).join('')}
+                </select>
+                <input type="text" id="cartel-empresa" value="${empresaSel || ''}" style="width:320px;margin-top:4px;">
+            </label>
+            <label>👤 Responsable:<br>
+                <select id="cartel-responsable-select" style="width:324px;">
+                    ${empresas.map((e, i) => `<option value="${e.responsable}" data-emp="${e.empresa}" data-tel="${e.telefono}" ${responsableSel === e.responsable ? 'selected' : ''}>${e.responsable}</option>`).join('')}
+                </select>
+                <input type="text" id="cartel-responsable" value="${responsableSel || ''}" style="width:320px;margin-top:4px;">
+            </label>
+            <label>📞 Teléfono:<br>
+                <select id="cartel-telefono-select" style="width:324px;">
+                    ${empresas.map((e, i) => `<option value="${e.telefono}" data-emp="${e.empresa}" data-resp="${e.responsable}" ${telefonoSel === e.telefono ? 'selected' : ''}>${e.telefono}</option>`).join('')}
+                </select>
+                <input type="text" id="cartel-telefono" value="${telefonoSel || ''}" style="width:320px;margin-top:4px;">
+            </label>
+        `;
+    }
+
+    // --- Renderizado del formulario y listeners ---
+    const form = document.createElement('form');
+    form.style.display = 'flex';
+    form.style.flexDirection = 'column';
+    form.style.gap = '16px';
+
+    function renderForm(empresaSel, responsableSel, telefonoSel, logosSel) {
+        form.innerHTML = `
+            <label>🚩 Logos de riesgo:<br>
+                <select id="cartel-logos-select" multiple size="3" style="width:324px;">
+                    ${imagenesSenales.map(img => `<option value="${img}" ${logosSel && logosSel.includes(img) ? 'selected' : ''}>${img.split('/').pop().replace(/\.[^.]+$/, '')}</option>`).join('')}
+                </select>
+            </label>
+            <label>🔧 Trabajo a realizar:<br><input type="text" id="cartel-descripcion" value="${campos.descripcion || ''}" style="width:320px;"></label>
+            <label>🏢 Departamento:<br>
+                <select id="cartel-departamento-select" style="width:324px;">
+                    ${deptos.map(d => `<option value="${d}" ${campos.departamento === d ? 'selected' : ''}>${d}</option>`).join('')}
+                </select>
+                <input type="text" id="cartel-departamento" value="${campos.departamento || ''}" style="width:320px;margin-top:4px;">
+            </label>
+            <label>📝 Nº Solicitud / Permiso:<br><input type="text" id="cartel-numero" value="${campos.numero || ''}" style="width:320px;"></label>
+            ${renderEmpresaResponsableTelefono(campos.departamento, empresaSel, responsableSel, telefonoSel)}
+            <div style="margin-top:16px;display:flex;gap:12px;">
+                <button type="button" id="btn-imprimir-cartel-final" style="background:#2d7be5;color:#fff;padding:8px 18px;border:none;border-radius:6px;font-size:1.1em;">🖨️ Imprimir</button>
+                <button type="button" id="btn-cerrar-cartel-modal" style="background:#444;color:#fff;padding:8px 18px;border:none;border-radius:6px;">Cerrar</button>
+            </div>
+        `;
+
+        // --- Listeners de selects y campos ---
+        const logosSelect = form.querySelector('#cartel-logos-select');
+        if (logosSelect) {
+            logosSelect.addEventListener('change', () => {
+                selectedLogos = Array.from(logosSelect.selectedOptions).map(opt => opt.value);
+                renderForm(
+                    form.querySelector('#cartel-empresa')?.value || '',
+                    form.querySelector('#cartel-responsable')?.value || '',
+                    form.querySelector('#cartel-telefono')?.value || '',
+                    selectedLogos
+                );
+                attachListeners();
+                form.dispatchEvent(new Event('input'));
+            });
+        }
+        const deptSelect = form.querySelector('#cartel-departamento-select');
+        const deptInput = form.querySelector('#cartel-departamento');
+        deptSelect.addEventListener('change', () => {
+            deptInput.value = deptSelect.value;
+            campos.departamento = deptSelect.value;
+            const empresas = getEmpresasDept(deptSelect.value);
+            const e0 = empresas[0] || {empresa:'', responsable:'', telefono:''};
+            renderForm(e0.empresa, e0.responsable, e0.telefono, selectedLogos);
+            attachListeners();
+            form.dispatchEvent(new Event('input'));
+        });
+        deptInput.addEventListener('input', () => {
+            deptSelect.value = deptInput.value;
+            campos.departamento = deptInput.value;
+            if (empresasPorDept[deptInput.value]) {
+                const empresas = getEmpresasDept(deptInput.value);
+                const e0 = empresas[0] || {empresa:'', responsable:'', telefono:''};
+                renderForm(e0.empresa, e0.responsable, e0.telefono, selectedLogos);
+                attachListeners();
+                form.dispatchEvent(new Event('input'));
+            }
+        });
+        // Empresa
+        const empresaSelect = form.querySelector('#cartel-empresa-select');
+        const empresaInput = form.querySelector('#cartel-empresa');
+        empresaSelect.addEventListener('change', () => {
+            empresaInput.value = empresaSelect.value;
+            const idx = empresaSelect.selectedIndex;
+            const empresas = getEmpresasDept(form.querySelector('#cartel-departamento').value);
+            const e = empresas[idx] || {empresa:'', responsable:'', telefono:''};
+            renderForm(e.empresa, e.responsable, e.telefono, selectedLogos);
+            attachListeners();
+            form.dispatchEvent(new Event('input'));
+        });
+        empresaInput.addEventListener('input', () => {
+            empresaSelect.value = empresaInput.value;
+        });
+        // Responsable
+        const responsableSelect = form.querySelector('#cartel-responsable-select');
+        const responsableInput = form.querySelector('#cartel-responsable');
+        responsableSelect.addEventListener('change', () => {
+            responsableInput.value = responsableSelect.value;
+            const idx = responsableSelect.selectedIndex;
+            const empresas = getEmpresasDept(form.querySelector('#cartel-departamento').value);
+            const e = empresas[idx] || {empresa:'', responsable:'', telefono:''};
+            renderForm(e.empresa, e.responsable, e.telefono, selectedLogos);
+            attachListeners();
+            form.dispatchEvent(new Event('input'));
+        });
+        responsableInput.addEventListener('input', () => {
+            responsableSelect.value = responsableInput.value;
+        });
+        // Teléfono
+        const telefonoSelect = form.querySelector('#cartel-telefono-select');
+        const telefonoInput = form.querySelector('#cartel-telefono');
+        telefonoSelect.addEventListener('change', () => {
+            telefonoInput.value = telefonoSelect.value;
+            const idx = telefonoSelect.selectedIndex;
+            const empresas = getEmpresasDept(form.querySelector('#cartel-departamento').value);
+            const e = empresas[idx] || {empresa:'', responsable:'', telefono:''};
+            renderForm(e.empresa, e.responsable, e.telefono, selectedLogos);
+            attachListeners();
+            form.dispatchEvent(new Event('input'));
+        });
+        telefonoInput.addEventListener('input', () => {
+            telefonoSelect.value = telefonoInput.value;
+        });
+    }
+
+    // --- Listeners de imprimir y cerrar ---
+    function attachListeners() {
+        const btnImprimir = form.querySelector('#btn-imprimir-cartel-final');
+        if (btnImprimir) {
+            btnImprimir.onclick = (e) => {
+                e.preventDefault();
+                const descripcion = form.querySelector('#cartel-descripcion').value;
+                const departamento = form.querySelector('#cartel-departamento').value;
+                const numero = form.querySelector('#cartel-numero').value;
+                const empresa = form.querySelector('#cartel-empresa').value;
+                const responsable = form.querySelector('#cartel-responsable').value;
+                const telefono = form.querySelector('#cartel-telefono').value;
+                const logos = Array.from(form.querySelector('#cartel-logos-select')?.selectedOptions || []).map(opt => opt.value);
+                const printWindow = window.open('', '', 'width=1200,height=900');
+                if (!printWindow) {
+                    alert('El navegador ha bloqueado la ventana emergente. Permite popups para imprimir.');
+                    return;
+                }
+                printWindow.document.write(`
+                    <html><head><title>Cartel Trabajo</title>
+                    <style>
+                        @media print {
+                            @page { size: A4 landscape; margin: 0.7cm; }
+                            body { background: #fff !important; color: #111 !important; }
+                        }
+                        body { background: #fff; color: #111; font-family: Arial,sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+                        .cartel {
+                            background: #fff; color: #111; border-radius: 10px; box-shadow: 0 2px 16px #0002;
+                            width: 97vw; max-width: 1400px; min-height: 650; max-height: 95vh;
+                            padding: 8px 18px 8px 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+                            page-break-inside: avoid;
+                        }
+                        .cartel-logos {
+                            display: flex;
+                            gap: 18px;
+                            margin-bottom: 18px;
+                            justify-content: center;
+                            align-items: flex-end;
+                        }
+                        .cartel-logos img {
+                            height: 180px; width: 180px; object-fit: contain; border: 1.2px solid #ccc; background: #fff; border-radius: 7px;
+                        }
+                        .cartel .titulo {
+                            font-size: 2.7em; font-weight: bold; text-align: center; color: #111; margin-bottom: 18px; margin-top: 0;
+                        }
+                        .cartel .campo {
+                            font-size: 1.25em; margin: 0 0 8px 0; color: #111; text-align: left;
+                        }
+                    </style>
+                    </head><body>
+                        <div class="cartel">
+                          <div class="cartel-logos">
+                            ${logos.map(img => `<img src='${img}'>`).join('')}
+                          </div>
+                          <div class="titulo">${descripcion}</div>
+                          <div class="campo">🏢 <b>Departamento:</b> ${departamento}</div>
+                          <div class="campo">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
+                          <div class="campo">🏭 <b>Empresa:</b> ${empresa}</div>
+                          <div class="campo">👤 <b>Responsable:</b> ${responsable}</div>
+                          <div class="campo">📞 <b>Teléfono:</b> ${telefono}</div>
+                        </div>
+                        <script>window.onload = function() { window.print(); setTimeout(()=>window.close(), 500); };</script>
+                    </body></html>
+                `);
+                printWindow.document.close();
+            };
+        }
+        const btnCerrar = form.querySelector('#btn-cerrar-cartel-modal');
+        if (btnCerrar) btnCerrar.onclick = function() {
+            if (overlay && overlay.parentElement) document.body.removeChild(overlay);
+            document.removeEventListener('keydown', onKeyDownClose);
+        };
+    }
+
+    // --- Vista previa ---
+    const preview = document.createElement('div');
+    preview.id = 'cartel-preview';
+    preview.style.background = '#222';
+    preview.style.color = '#fff';
+    preview.style.padding = '24px 32px';
+    preview.style.borderRadius = '12px';
+    preview.style.width = '600px';
+    preview.style.minHeight = '420px';
+    preview.style.display = 'flex';
+    preview.style.flexDirection = 'column';
+    preview.style.justifyContent = 'center';
+    preview.style.alignItems = 'center';
+    preview.style.fontFamily = 'Arial,sans-serif';
+    preview.style.boxShadow = '0 2px 16px #0006';
+    preview.style.gap = '18px';
+
+    function actualizarPreview() {
+        const descripcion = form.querySelector('#cartel-descripcion').value;
+        const departamento = form.querySelector('#cartel-departamento').value;
+        const numero = form.querySelector('#cartel-numero').value;
+        const empresa = form.querySelector('#cartel-empresa').value;
+        const responsable = form.querySelector('#cartel-responsable').value;
+        const telefono = form.querySelector('#cartel-telefono').value;
+        preview.innerHTML = `
+            <div style="display:flex;gap:12px;justify-content:center;align-items:center;margin-bottom:10px;">
+                ${selectedLogos.map(img => `<img src='${img}' style='height:48px;width:48px;object-fit:contain;border:1px solid #ccc;background:#fff;border-radius:6px;'>`).join('')}
+            </div>
+            <div style="font-size:2.5em;font-weight:bold;text-align:center;margin-bottom:18px;">${descripcion ? descripcion : ''}</div>
+            <div style="font-size:1.2em;margin-bottom:4px;">🏢 <b>Departamento:</b> ${departamento}</div>
+            <div style="font-size:1.2em;margin-bottom:4px;">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
+            <div style="font-size:1.2em;margin-bottom:4px;">🏭 <b>Empresa:</b> ${empresa}</div>
+            <div style="font-size:1.2em;margin-bottom:4px;">👤 <b>Responsable:</b> ${responsable}</div>
+            <div style="font-size:1.2em;margin-bottom:4px;">📞 <b>Teléfono:</b> ${telefono}</div>
+        `;
+    }
+    form.addEventListener('input', actualizarPreview);
+
+    // --- Inicialización y layout ---
+    renderForm(campos.empresa, campos.responsable, campos.telefono, selectedLogos);
+    attachListeners();
+    actualizarPreview();
+
+    modal.appendChild(form);
+    modal.appendChild(preview);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // --- Cierre modal ---
+    function cerrar() {
+        if (overlay && overlay.parentElement) document.body.removeChild(overlay);
+        document.removeEventListener('keydown', onKeyDownClose);
+    }
+    function onKeyDownClose(e) { if (e.key === 'Escape' || e.key === 'Esc') cerrar(); }
+    document.addEventListener('keydown', onKeyDownClose);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar(); });
+    modal.addEventListener('click', (e) => { e.stopPropagation(); });
+}
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);

@@ -1,0 +1,42 @@
+{
+  "Mto. Eléctrico": [
+    {
+      "empresa": "Naturgy",
+      "responsable": "Martinez Becerra",
+      "telefono": "193194"
+    },
+    {
+      "empresa": "Masa",
+      "responsable": "Ramiro",
+      "telefono": "608306680"
+    }
+  ],
+  "Mto. Mecánico": [
+    {
+      "empresa": "Naturgy",
+      "responsable": "Carlos López",
+      "telefono": "600123456"
+    }
+  ],
+  "GE": [
+    {
+      "empresa": "G.E.",
+      "responsable": "----",
+      "telefono": "----"
+    }
+  ],
+  "Mto. I&C": [
+    {
+      "empresa": "Masa",
+      "responsable": "Toño",
+      "telefono": "----"
+    }
+  ],
+  "Otros": [
+    {
+      "empresa": "OTRAS EMPRESAS S.A.",
+      "responsable": "---",
+      "telefono": "---"
+    }
+  ]
+}

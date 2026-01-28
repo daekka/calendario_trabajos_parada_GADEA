@@ -1,3 +1,187 @@
+/* Mejorar aprovechamiento de espacio en el modal de cartel */
+ .modal-cartel {
+    background: #fff;
+    color: #111;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px #000a;
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+    align-items: flex-start;
+    max-width: 900px;
+    width: 98vw;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+.modal-cartel form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 340px;
+}
+ .modal-cartel form label {
+    font-size: 1em;
+    color: #222;
+    margin-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+ .modal-cartel input[type="text"],
+ .modal-cartel select {
+    width: 100%;
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #f7f7f7;
+    color: #111;
+    font-size: 1em;
+    margin-top: 1px;
+    margin-bottom: 2px;
+    outline: none;
+    transition: border 0.2s;
+    box-sizing: border-box;
+}
+.modal-cartel input[type="text"]:focus,
+.modal-cartel select:focus {
+    border: 1.5px solid #2d7be5;
+}
+ .modal-cartel #cartel-preview {
+    background: #fff;
+    color: #111;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px #0006;
+    width: 420px;
+    min-height: 320px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial,sans-serif;
+    gap: 10px;
+}
+ .modal-cartel #cartel-preview .titulo {
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 6px;
+    color: #111;
+}
+ .modal-cartel #cartel-preview .campo {
+    font-size: 1.1em;
+    margin-top: 4px;
+    color: #111;
+}
+.modal-cartel button {
+    font-size: 1em;
+    font-weight: 600;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    padding: 7px 14px;
+    margin-right: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+.modal-cartel #btn-imprimir-cartel-final {
+    background: #2d7be5;
+    color: #fff;
+}
+.modal-cartel #btn-imprimir-cartel-final:hover {
+    background: #1956a3;
+}
+.modal-cartel #btn-cerrar-cartel-modal {
+    background: #444;
+    color: #fff;
+}
+.modal-cartel #btn-cerrar-cartel-modal:hover {
+    background: #222;
+}
+/* Modal cartel editable y vista previa */
+.modal-cartel {
+    background: #222;
+    color: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px #000a;
+    padding: 32px 32px;
+    display: flex;
+    flex-direction: row;
+    gap: 36px;
+    align-items: flex-start;
+    max-width: 950px;
+    width: 95vw;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+.modal-cartel form label {
+    font-size: 1.1em;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+}
+.modal-cartel input[type="text"] {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #181818;
+    color: #fff;
+    font-size: 1.1em;
+    margin-top: 2px;
+    margin-bottom: 8px;
+    outline: none;
+    transition: border 0.2s;
+}
+.modal-cartel input[type="text"]:focus {
+    border: 1.5px solid #2d7be5;
+}
+.modal-cartel button {
+    font-size: 1em;
+    font-weight: 600;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    padding: 8px 18px;
+    margin-right: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+.modal-cartel #btn-imprimir-cartel-final {
+    background: #2d7be5;
+    color: #fff;
+}
+.modal-cartel #btn-imprimir-cartel-final:hover {
+    background: #1956a3;
+}
+.modal-cartel #btn-cerrar-cartel-modal {
+    background: #444;
+    color: #fff;
+}
+.modal-cartel #btn-cerrar-cartel-modal:hover {
+    background: #222;
+}
+.modal-cartel #cartel-preview {
+    background: #222;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px #0006;
+    width: 600px;
+    min-height: 420px;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial,sans-serif;
+    gap: 18px;
+}
+.modal-cartel #cartel-preview .titulo {
+    font-size: 2.2em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.modal-cartel #cartel-preview .campo {
+    font-size: 1.3em;
+    margin-top: 8px;
+}
 /* Badge para estado de solicitud en aislamientos */
 .badge-estado {
     display: inline-block;
