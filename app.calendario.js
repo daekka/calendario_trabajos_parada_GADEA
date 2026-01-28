@@ -1,11 +1,24 @@
 ﻿// Cargar datos de empresas por departamento (solo una vez)
-let EMPRESAS_DEPARTAMENTOS = null;
+const EMPRESAS_DEPARTAMENTOS = {
+    "Mto. Eléctrico": [
+        { "empresa": "Naturgy", "responsable": "Martinez Becerra", "telefono": "193194" },
+        { "empresa": "Masa", "responsable": "Ramiro", "telefono": "608306680" }
+    ],
+    "Mto. Mecánico": [
+        { "empresa": "Naturgy", "responsable": "Carlos López", "telefono": "600123456" }
+    ],
+    "GE": [
+        { "empresa": "G.E.", "responsable": "----", "telefono": "----" }
+    ],
+    "Mto. I&C": [
+        { "empresa": "Masa", "responsable": "Toño", "telefono": "----" }
+    ],
+    "Otros": [
+        { "empresa": "OTRAS EMPRESAS S.A.", "responsable": "---", "telefono": "---" }
+    ]
+};
 function cargarEmpresasDepartamentos(callback) {
-    if (EMPRESAS_DEPARTAMENTOS) { callback(EMPRESAS_DEPARTAMENTOS); return; }
-    fetch('empresas_departamentos.json')
-        .then(r => r.json())
-        .then(data => { EMPRESAS_DEPARTAMENTOS = data; callback(data); })
-        .catch(() => { EMPRESAS_DEPARTAMENTOS = {}; callback({}); });
+        callback(EMPRESAS_DEPARTAMENTOS);
 }
 // Generar calendarios basado en las fechas seleccionadas
 function generarCalendario() {
