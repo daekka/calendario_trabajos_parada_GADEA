@@ -1,186 +1,161 @@
-/* Mejorar aprovechamiento de espacio en el modal de cartel */
- .modal-cartel {
-    background: #fff;
-    color: #111;
-    border-radius: 14px;
-    box-shadow: 0 8px 32px #000a;
-    padding: 24px 18px;
+/* =====================================================
+   MODAL CARTEL - Editar e imprimir cartel
+   ===================================================== */
+.modal-cartel {
+    background: #1a1a2e;
+    color: #eaeaea;
+    border-radius: 16px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+    padding: 24px 28px;
     display: flex;
     flex-direction: row;
-    gap: 18px;
-    align-items: flex-start;
-    max-width: 900px;
-    width: 98vw;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    gap: 28px;
+    align-items: stretch;
+    max-width: 1150px;
+    width: 96vw;
+    max-height: 70vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
+
+/* Formulario con grid de 2 columnas */
 .modal-cartel form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    width: 520px;
+    min-width: 420px;
+    align-content: start;
+}
+
+.modal-cartel form label {
+    font-size: 0.92em;
+    color: #b8c0cc;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 340px;
+    gap: 4px;
 }
- .modal-cartel form label {
-    font-size: 1em;
-    color: #222;
-    margin-bottom: 2px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+
+/* Campos que ocupan todo el ancho (span 2 columnas) */
+.modal-cartel form label.full-width {
+    grid-column: 1 / -1;
 }
- .modal-cartel input[type="text"],
- .modal-cartel select {
+
+.modal-cartel input[type="text"],
+.modal-cartel select {
     width: 100%;
-    padding: 5px 8px;
-    border-radius: 5px;
-    border: 1px solid #444;
-    background: #f7f7f7;
-    color: #111;
-    font-size: 1em;
-    margin-top: 1px;
-    margin-bottom: 2px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #3a3f5c;
+    background: #0f0f1a;
+    color: #fff;
+    font-size: 0.95em;
     outline: none;
-    transition: border 0.2s;
+    transition: border 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
 }
+
 .modal-cartel input[type="text"]:focus,
 .modal-cartel select:focus {
-    border: 1.5px solid #2d7be5;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74,144,217,0.25);
 }
- .modal-cartel #cartel-preview {
-    background: #fff;
-    color: #111;
-    border-radius: 12px;
-    box-shadow: 0 2px 16px #0006;
-    width: 420px;
-    min-height: 320px;
-    padding: 16px 18px;
+
+/* Botones de acción */
+.modal-cartel .cartel-actions {
+    grid-column: 1 / -1;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial,sans-serif;
-    gap: 10px;
-}
- .modal-cartel #cartel-preview .titulo {
-    font-size: 1.5em;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 6px;
-    color: #111;
-}
- .modal-cartel #cartel-preview .campo {
-    font-size: 1.1em;
-    margin-top: 4px;
-    color: #111;
-}
-.modal-cartel button {
-    font-size: 1em;
-    font-weight: 600;
-    border-radius: 7px;
-    border: none;
-    cursor: pointer;
-    padding: 7px 14px;
-    margin-right: 4px;
-    transition: background 0.2s, color 0.2s;
-}
-.modal-cartel #btn-imprimir-cartel-final {
-    background: #2d7be5;
-    color: #fff;
-}
-.modal-cartel #btn-imprimir-cartel-final:hover {
-    background: #1956a3;
-}
-.modal-cartel #btn-cerrar-cartel-modal {
-    background: #444;
-    color: #fff;
-}
-.modal-cartel #btn-cerrar-cartel-modal:hover {
-    background: #222;
-}
-/* Modal cartel editable y vista previa */
-.modal-cartel {
-    background: #222;
-    color: #fff;
-    border-radius: 14px;
-    box-shadow: 0 8px 32px #000a;
-    padding: 32px 32px;
-    display: flex;
-    flex-direction: row;
-    gap: 36px;
-    align-items: flex-start;
-    max-width: 950px;
-    width: 95vw;
-    font-family: 'Segoe UI', Arial, sans-serif;
-}
-.modal-cartel form label {
-    font-size: 1.1em;
-    color: #e0e0e0;
-    margin-bottom: 4px;
-}
-.modal-cartel input[type="text"] {
-    width: 100%;
-    padding: 7px 10px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #181818;
-    color: #fff;
-    font-size: 1.1em;
-    margin-top: 2px;
-    margin-bottom: 8px;
-    outline: none;
-    transition: border 0.2s;
-}
-.modal-cartel input[type="text"]:focus {
-    border: 1.5px solid #2d7be5;
-}
-.modal-cartel button {
-    font-size: 1em;
-    font-weight: 600;
-    border-radius: 7px;
-    border: none;
-    cursor: pointer;
-    padding: 8px 18px;
-    margin-right: 6px;
-    transition: background 0.2s, color 0.2s;
-}
-.modal-cartel #btn-imprimir-cartel-final {
-    background: #2d7be5;
-    color: #fff;
-}
-.modal-cartel #btn-imprimir-cartel-final:hover {
-    background: #1956a3;
-}
-.modal-cartel #btn-cerrar-cartel-modal {
-    background: #444;
-    color: #fff;
-}
-.modal-cartel #btn-cerrar-cartel-modal:hover {
-    background: #222;
-}
-.modal-cartel #cartel-preview {
-    background: #222;
-    color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 16px #0006;
-    width: 600px;
-    min-height: 420px;
-    padding: 24px 32px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial,sans-serif;
-    gap: 18px;
-}
-.modal-cartel #cartel-preview .titulo {
-    font-size: 2.2em;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-}
-.modal-cartel #cartel-preview .campo {
-    font-size: 1.3em;
+    gap: 12px;
     margin-top: 8px;
+}
+
+.modal-cartel button {
+    font-size: 0.95em;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.modal-cartel button:hover {
+    transform: translateY(-1px);
+}
+
+.modal-cartel #btn-imprimir-cartel-final {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+}
+
+.modal-cartel #btn-imprimir-cartel-final:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.modal-cartel #btn-cerrar-cartel-modal {
+    background: #2d2d44;
+    color: #ccc;
+}
+
+.modal-cartel #btn-cerrar-cartel-modal:hover {
+    background: #3d3d5c;
+    color: #fff;
+}
+
+/* Vista previa del cartel */
+.modal-cartel #cartel-preview {
+    background: linear-gradient(145deg, #16213e 0%, #1a1a2e 100%);
+    color: #fff;
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    width: 480px;
+    min-width: 380px;
+    min-height: 280px;
+    max-height: 100%;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.modal-cartel #cartel-preview .titulo {
+    font-size: 1.6em;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.modal-cartel #cartel-preview .campo {
+    font-size: 1.05em;
+    margin: 2px 0;
+    color: #d0d0d0;
+}
+
+.modal-cartel #cartel-preview .campo b {
+    color: #fff;
+}
+
+/* Logos en la vista previa */
+.modal-cartel #cartel-preview .preview-logos {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.modal-cartel #cartel-preview .preview-logo-img {
+    height: 42px;
+    width: 42px;
+    object-fit: contain;
+    border: 1px solid #3a3f5c;
+    background: #fff;
+    border-radius: 6px;
 }
 /* Badge para estado de solicitud en aislamientos */
 .badge-estado {

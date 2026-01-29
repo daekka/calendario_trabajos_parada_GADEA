@@ -916,17 +916,6 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
     overlay.style.zIndex = 9999;
     const modal = document.createElement('div');
     modal.className = 'modal-cartel';
-    modal.style.maxWidth = '900px';
-    modal.style.width = '90vw';
-    modal.style.background = '#222';
-    modal.style.color = '#fff';
-    modal.style.padding = '24px';
-    modal.style.borderRadius = '12px';
-    modal.style.boxShadow = '0 4px 32px #0008';
-    modal.style.position = 'relative';
-    modal.style.display = 'flex';
-    modal.style.flexDirection = 'row';
-    modal.style.gap = '32px';
 
     // --- Variables de datos ---
     const imagenesSenales = [
@@ -946,52 +935,53 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
     function renderEmpresaResponsableTelefono(depto, empresaSel, responsableSel, telefonoSel) {
         const empresas = getEmpresasDept(depto);
         return `
-            <label>🏭 Empresa:<br>
-                <select id="cartel-empresa-select" style="width:324px;">
+            <label>🏭 Empresa:
+                <select id="cartel-empresa-select">
                     ${empresas.map((e, i) => `<option value="${e.empresa}" data-resp="${e.responsable}" data-tel="${e.telefono}" ${empresaSel === e.empresa ? 'selected' : ''}>${e.empresa}</option>`).join('')}
                 </select>
-                <input type="text" id="cartel-empresa" value="${empresaSel || ''}" style="width:320px;margin-top:4px;">
+                <input type="text" id="cartel-empresa" value="${empresaSel || ''}">
             </label>
-            <label>👤 Responsable:<br>
-                <select id="cartel-responsable-select" style="width:324px;">
+            <label>👤 Responsable:
+                <select id="cartel-responsable-select">
                     ${empresas.map((e, i) => `<option value="${e.responsable}" data-emp="${e.empresa}" data-tel="${e.telefono}" ${responsableSel === e.responsable ? 'selected' : ''}>${e.responsable}</option>`).join('')}
                 </select>
-                <input type="text" id="cartel-responsable" value="${responsableSel || ''}" style="width:320px;margin-top:4px;">
+                <input type="text" id="cartel-responsable" value="${responsableSel || ''}">
             </label>
-            <label>📞 Teléfono:<br>
-                <select id="cartel-telefono-select" style="width:324px;">
+            <label>📞 Teléfono:
+                <select id="cartel-telefono-select">
                     ${empresas.map((e, i) => `<option value="${e.telefono}" data-emp="${e.empresa}" data-resp="${e.responsable}" ${telefonoSel === e.telefono ? 'selected' : ''}>${e.telefono}</option>`).join('')}
                 </select>
-                <input type="text" id="cartel-telefono" value="${telefonoSel || ''}" style="width:320px;margin-top:4px;">
+                <input type="text" id="cartel-telefono" value="${telefonoSel || ''}">
             </label>
         `;
     }
 
     // --- Renderizado del formulario y listeners ---
     const form = document.createElement('form');
-    form.style.display = 'flex';
-    form.style.flexDirection = 'column';
-    form.style.gap = '16px';
 
     function renderForm(empresaSel, responsableSel, telefonoSel, logosSel) {
         form.innerHTML = `
-            <label>🚩 Logos de riesgo:<br>
-                <select id="cartel-logos-select" multiple size="3" style="width:324px;">
+            <label class="full-width">🔧 Trabajo a realizar:
+                <input type="text" id="cartel-descripcion" value="${campos.descripcion || ''}">
+            </label>
+            <label>🏢 Departamento:
+                <select id="cartel-departamento-select">
+                    ${deptos.map(d => `<option value="${d}" ${campos.departamento === d ? 'selected' : ''}>${d}</option>`).join('')}
+                </select>
+                <input type="text" id="cartel-departamento" value="${campos.departamento || ''}">
+            </label>
+            <label>📝 Nº Solicitud / Permiso:
+                <input type="text" id="cartel-numero" value="${campos.numero || ''}">
+            </label>
+            ${renderEmpresaResponsableTelefono(campos.departamento, empresaSel, responsableSel, telefonoSel)}
+            <label>🚩 Logos de riesgo:
+                <select id="cartel-logos-select" multiple size="3">
                     ${imagenesSenales.map(img => `<option value="${img}" ${logosSel && logosSel.includes(img) ? 'selected' : ''}>${img.split('/').pop().replace(/\.[^.]+$/, '')}</option>`).join('')}
                 </select>
             </label>
-            <label>🔧 Trabajo a realizar:<br><input type="text" id="cartel-descripcion" value="${campos.descripcion || ''}" style="width:320px;"></label>
-            <label>🏢 Departamento:<br>
-                <select id="cartel-departamento-select" style="width:324px;">
-                    ${deptos.map(d => `<option value="${d}" ${campos.departamento === d ? 'selected' : ''}>${d}</option>`).join('')}
-                </select>
-                <input type="text" id="cartel-departamento" value="${campos.departamento || ''}" style="width:320px;margin-top:4px;">
-            </label>
-            <label>📝 Nº Solicitud / Permiso:<br><input type="text" id="cartel-numero" value="${campos.numero || ''}" style="width:320px;"></label>
-            ${renderEmpresaResponsableTelefono(campos.departamento, empresaSel, responsableSel, telefonoSel)}
-            <div style="margin-top:16px;display:flex;gap:12px;">
-                <button type="button" id="btn-imprimir-cartel-final" style="background:#2d7be5;color:#fff;padding:8px 18px;border:none;border-radius:6px;font-size:1.1em;">🖨️ Imprimir</button>
-                <button type="button" id="btn-cerrar-cartel-modal" style="background:#444;color:#fff;padding:8px 18px;border:none;border-radius:6px;">Cerrar</button>
+            <div class="cartel-actions">
+                <button type="button" id="btn-imprimir-cartel-final">🖨️ Imprimir</button>
+                <button type="button" id="btn-cerrar-cartel-modal">Cerrar</button>
             </div>
         `;
 
@@ -1161,19 +1151,6 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
     // --- Vista previa ---
     const preview = document.createElement('div');
     preview.id = 'cartel-preview';
-    preview.style.background = '#222';
-    preview.style.color = '#fff';
-    preview.style.padding = '24px 32px';
-    preview.style.borderRadius = '12px';
-    preview.style.width = '600px';
-    preview.style.minHeight = '420px';
-    preview.style.display = 'flex';
-    preview.style.flexDirection = 'column';
-    preview.style.justifyContent = 'center';
-    preview.style.alignItems = 'center';
-    preview.style.fontFamily = 'Arial,sans-serif';
-    preview.style.boxShadow = '0 2px 16px #0006';
-    preview.style.gap = '18px';
 
     function actualizarPreview() {
         const descripcion = form.querySelector('#cartel-descripcion').value;
@@ -1183,15 +1160,15 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
         const responsable = form.querySelector('#cartel-responsable').value;
         const telefono = form.querySelector('#cartel-telefono').value;
         preview.innerHTML = `
-            <div style="display:flex;gap:12px;justify-content:center;align-items:center;margin-bottom:10px;">
-                ${selectedLogos.map(img => `<img src='${img}' style='height:48px;width:48px;object-fit:contain;border:1px solid #ccc;background:#fff;border-radius:6px;'>`).join('')}
+            <div class="preview-logos">
+                ${selectedLogos.map(img => `<img src='${img}' class="preview-logo-img">`).join('')}
             </div>
-            <div style="font-size:2.5em;font-weight:bold;text-align:center;margin-bottom:18px;">${descripcion ? descripcion : ''}</div>
-            <div style="font-size:1.2em;margin-bottom:4px;">🏢 <b>Departamento:</b> ${departamento}</div>
-            <div style="font-size:1.2em;margin-bottom:4px;">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
-            <div style="font-size:1.2em;margin-bottom:4px;">🏭 <b>Empresa:</b> ${empresa}</div>
-            <div style="font-size:1.2em;margin-bottom:4px;">👤 <b>Responsable:</b> ${responsable}</div>
-            <div style="font-size:1.2em;margin-bottom:4px;">📞 <b>Teléfono:</b> ${telefono}</div>
+            <div class="titulo">${descripcion || ''}</div>
+            <div class="campo">🏢 <b>Departamento:</b> ${departamento}</div>
+            <div class="campo">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
+            <div class="campo">🏭 <b>Empresa:</b> ${empresa}</div>
+            <div class="campo">👤 <b>Responsable:</b> ${responsable}</div>
+            <div class="campo">📞 <b>Teléfono:</b> ${telefono}</div>
         `;
     }
     form.addEventListener('input', actualizarPreview);
