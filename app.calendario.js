@@ -8,13 +8,13 @@ const EMPRESAS_DEPARTAMENTOS = {
         { "empresa": "Naturgy", "responsable": "Carlos López", "telefono": "600123456" }
     ],
     "GE": [
-        { "empresa": "G.E.", "responsable": "----", "telefono": "----" }
+        { "empresa": "G.E.", "responsable": "Angel Blanco", "telefono": "----" }
     ],
     "Mto. I&C": [
-        { "empresa": "Masa", "responsable": "Toño", "telefono": "----" }
+        { "empresa": "Masa", "responsable": "Toño", "telefono": "607855030" }
     ],
     "Otros": [
-        { "empresa": "OTRAS EMPRESAS S.A.", "responsable": "---", "telefono": "---" }
+        { "empresa": "Control Entrada", "responsable": "981600600", "telefono": "---" }
     ]
 };
 function cargarEmpresasDepartamentos(callback) {
@@ -931,7 +931,9 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
     // --- Variables de datos ---
     const imagenesSenales = [
         'señales/riesgo electrico.png',
-        'señales/caida objetos.png'
+        'señales/caida objetos.png',
+        'señales/espacio confinado.png',
+        'señales/atex.png'
         // Añade más si es necesario
     ];
     let selectedLogos = [];
@@ -1127,20 +1129,25 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
                         }
                     </style>
                     </head><body>
-                        <div class="cartel">
-                          <div class="cartel-logos">
-                            ${logos.map(img => `<img src='${img}'>`).join('')}
-                          </div>
-                          <div class="titulo">${descripcion}</div>
-                          <div class="campo">🏢 <b>Departamento:</b> ${departamento}</div>
-                          <div class="campo">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
-                          <div class="campo">🏭 <b>Empresa:</b> ${empresa}</div>
-                          <div class="campo">👤 <b>Responsable:</b> ${responsable}</div>
-                          <div class="campo">📞 <b>Teléfono:</b> ${telefono}</div>
-                        </div>
-                        <script>window.onload = function() { window.print(); setTimeout(()=>window.close(), 500); };</script>
-                    </body></html>
-                `);
+                                                <div class="cartel">
+                                                    <div class="cartel-logos">
+                                                        ${logos.map(img => `<img src='${img}'>`).join('')}
+                                                    </div>
+                                                    <div class="titulo">${descripcion}</div>
+                                                    <div class="campo">🏢 <b>Departamento:</b> ${departamento}</div>
+                                                    <div class="campo">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
+                                                    <div class="campo">🏭 <b>Empresa:</b> ${empresa}</div>
+                                                    <div class="campo">👤 <b>Responsable:</b> ${responsable}</div>
+                                                    <div class="campo">📞 <b>Teléfono:</b> ${telefono}</div>
+                                                    <div style="border-top:1.5px solid #ccc;margin:24px 0 0 0;width:100%;padding-top:12px;font-size:1.1em;">
+                                                        <div><b>🛂 Control accesos:</b> 981600600</div>
+                                                        <div><b>🖥️ Sala de control:</b> 691513038</div>
+                                                        <div><b>🏥 Enfermería:</b> 685054759</div>
+                                                    </div>
+                                                </div>
+                                                <script>window.onload = function() { window.print(); setTimeout(()=>window.close(), 500); };</script>
+                                        </body></html>
+                                `);
                 printWindow.document.close();
             };
         }
