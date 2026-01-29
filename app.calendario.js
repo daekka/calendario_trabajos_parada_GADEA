@@ -1091,53 +1091,114 @@ function mostrarModalCartelEditable(campos, empresasPorDept) {
                     <html><head><title>Cartel Trabajo</title>
                     <style>
                         @media print {
-                            @page { size: A4 landscape; margin: 0.7cm; }
-                            body { background: #fff !important; color: #111 !important; }
+                            @page { size: A4 landscape; margin: 0; }
+                            html, body { margin: 0; padding: 0; height: auto; }
                         }
-                        body { background: #fff; color: #111; font-family: Arial,sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            background: #fff;
+                            color: #111;
+                            font-family: Arial, sans-serif;
+                        }
+                        body {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 100vh;
+                        }
                         .cartel {
-                            background: #fff; color: #111; border-radius: 10px; box-shadow: 0 2px 16px #0002;
-                            width: 97vw; max-width: 1400px; min-height: 650; max-height: 95vh;
-                            padding: 8px 18px 8px 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-                            page-break-inside: avoid;
+                            background: #fff;
+                            color: #111;
+                            width: 100%;
+                            height: 100vh;
+                            padding: 15px 40px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: space-between;
+                            box-sizing: border-box;
+                            position: relative;
+                        }
+                        .logo-empresa {
+                            position: absolute;
+                            top: 15px;
+                            right: 40px;
+                            height: 70px;
+                            width: auto;
+                            object-fit: contain;
                         }
                         .cartel-logos {
                             display: flex;
-                            gap: 18px;
-                            margin-bottom: 18px;
+                            gap: 24px;
                             justify-content: center;
-                            align-items: flex-end;
+                            align-items: center;
                         }
                         .cartel-logos img {
-                            height: 180px; width: 180px; object-fit: contain; border: 1.2px solid #ccc; background: #fff; border-radius: 7px;
+                            height: 120px;
+                            width: 120px;
+                            object-fit: contain;
+                            border: 2px solid #333;
+                            background: #fff;
+                            border-radius: 8px;
                         }
                         .cartel .titulo {
-                            font-size: 2.7em; font-weight: bold; text-align: center; color: #111; margin-bottom: 18px; margin-top: 0;
+                            font-size: 4em;
+                            font-weight: bold;
+                            text-align: center;
+                            color: #000;
+                            margin: 0;
+                            line-height: 1.1;
+                        }
+                        .cartel-campos {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 6px;
+                            width: 100%;
                         }
                         .cartel .campo {
-                            font-size: 1.25em; margin: 0 0 8px 0; color: #111; text-align: left;
+                            font-size: 1.8em;
+                            margin: 0;
+                            color: #111;
+                            text-align: center;
+                        }
+                        .cartel .campo b {
+                            color: #000;
+                        }
+                        .cartel-footer {
+                            border-top: 2px solid #999;
+                            width: 100%;
+                            padding-top: 8px;
+                            font-size: 1.3em;
+                            display: flex;
+                            justify-content: center;
+                            gap: 50px;
                         }
                     </style>
                     </head><body>
-                                                <div class="cartel">
-                                                    <div class="cartel-logos">
-                                                        ${logos.map(img => `<img src='${img}'>`).join('')}
-                                                    </div>
-                                                    <div class="titulo">${descripcion}</div>
-                                                    <div class="campo">🏢 <b>Departamento:</b> ${departamento}</div>
-                                                    <div class="campo">📝 <b>Solicitud / Permiso:</b> ${numero}</div>
-                                                    <div class="campo">🏭 <b>Empresa:</b> ${empresa}</div>
-                                                    <div class="campo">👤 <b>Responsable:</b> ${responsable}</div>
-                                                    <div class="campo">📞 <b>Teléfono:</b> ${telefono}</div>
-                                                    <div style="border-top:1.5px solid #ccc;margin:24px 0 0 0;width:100%;padding-top:12px;font-size:1.1em;">
-                                                        <div><b>🛂 Control accesos:</b> 981600600</div>
-                                                        <div><b>🖥️ Sala de control:</b> 691513038</div>
-                                                        <div><b>🏥 Enfermería:</b> 685054759</div>
-                                                    </div>
-                                                </div>
-                                                <script>window.onload = function() { window.print(); setTimeout(()=>window.close(), 500); };</script>
-                                        </body></html>
-                                `);
+                        <div class="cartel">
+                            <img src="señales/logo_naturgy.png" class="logo-empresa" alt="Naturgy">
+                            <div class="cartel-logos">
+                                ${logos.map(img => `<img src='${img}'>`).join('')}
+                            </div>
+                            <div class="titulo">${descripcion}</div>
+                            <div class="cartel-campos">
+                                <div class="campo">🏢 Departamento: <b>${departamento}</b></div>
+                                <div class="campo">📝 Solicitud / Permiso: <b>${numero}</b></div>
+                                <div class="campo">🏭 Empresa: <b>${empresa}</b></div>
+                                <div class="campo">👤 Responsable: <b>${responsable}</b></div>
+                                <div class="campo">📞 Teléfono: <b>${telefono}</b></div>
+                            </div>
+                            <div class="cartel-footer">
+                                <div><b>🛂 Control accesos:</b> 981600600</div>
+                                <div><b>🖥️ Sala de control:</b> 691513038</div>
+                                <div><b>🏥 Enfermería:</b> 685054759</div>
+                            </div>
+                        </div>
+                        <script>window.onload = function() { window.print(); setTimeout(()=>window.close(), 500); }<\/script>
+                    </body></html>
+                `);
                 printWindow.document.close();
             };
         }
