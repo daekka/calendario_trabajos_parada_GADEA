@@ -1,0 +1,3 @@
+<!-- Favicon de calendario -->
+<link rel="icon" type="image/png" href="señales/icons8-calendar-96.png">
+<!-- ...existing code... -->
