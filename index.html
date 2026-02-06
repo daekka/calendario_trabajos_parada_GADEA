@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
     <div class="container">
@@ -65,6 +66,7 @@
                         <button class="tab-button" data-tab="listado">📋 Listado</button>
                         
                         <button class="tab-button" data-tab="aislamientos">🔒 Aislamientos</button>
+                        <button class="tab-button" data-tab="estadisticas">📊 Estadísticas</button>
                     </div>
                     <div class="top-controls-right">
                         <div class="top-right-actions-inline">
@@ -143,6 +145,62 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="tab-content" id="estadisticasTab">
+                    <div class="estadisticas-section">
+                        <div class="estadisticas-controls">
+                            <label for="estadFechaDesde" class="fecha-label">Fecha inicio desde:</label>
+                            <input type="date" id="estadFechaDesde" class="fecha-input" />
+                            <label for="estadFechaHasta" class="fecha-label">hasta:</label>
+                            <input type="date" id="estadFechaHasta" class="fecha-input" />
+                            <div class="dropdown" id="estadDeptDropdown">
+                                <button class="dropdown-toggle" id="estadDeptBtn">Todos los departamentos</button>
+                                <div class="dropdown-menu" id="estadDeptMenu">
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" value="TODOS" checked> Todos
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-electrico">
+                                        <input type="checkbox" value="MTO_ELECTRICO"> Mto. Eléctrico
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-mecanico">
+                                        <input type="checkbox" value="MTO_MECANICO"> Mto. Mecánico
+                                    </label>
+                                    <label class="dropdown-item filtro-ge">
+                                        <input type="checkbox" value="GE"> GE
+                                    </label>
+                                    <label class="dropdown-item filtro-mto-ic">
+                                        <input type="checkbox" value="MTO_IC"> Mto. I&C
+                                    </label>
+                                    <label class="dropdown-item filtro-otros">
+                                        <input type="checkbox" value="OTROS"> OTROS
+                                    </label>
+                                </div>
+                            </div>
+                            <button id="estadActualizarBtn" class="actualizar-btn">Actualizar</button>
+                        </div>
+
+                        <div id="estadisticasLoading" class="estadisticas-loading" style="display:none;">
+                            <div class="spinner"></div>
+                            <span>Cargando datos históricos...</span>
+                        </div>
+
+                        <div id="estadResumen" class="estadisticas-resumen" style="display:none;"></div>
+
+                        <div id="estadGraficas" class="estadisticas-grid" style="display:none;">
+                            <div class="chart-card">
+                                <h3>Evolución de estados en el tiempo</h3>
+                                <div class="chart-wrapper"><canvas id="chartEvolucion"></canvas></div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Cambios de estado por día</h3>
+                                <div class="chart-wrapper"><canvas id="chartCambiosDia"></canvas></div>
+                            </div>
+                        </div>
+                        <div id="estadSinDatos" class="estadisticas-sin-datos">
+                            <p class="empty-message">Haz clic en "Actualizar" para cargar las estadísticas históricas desde la nube.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -155,6 +213,7 @@
     <script src="app.aislamientos.js"></script>
     <script src="app.dragdrop.js"></script>
     <script src="app.listado.js"></script>
+    <script src="app.estadisticas.js"></script>
     <script src="app.init.js"></script>
 </body>
 </html>

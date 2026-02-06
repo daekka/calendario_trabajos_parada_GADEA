@@ -143,6 +143,10 @@ document.querySelectorAll('.tab-button').forEach(button => {
         if (tabName === 'aislamientos') {
             renderizarAislamientos();
         }
+        // Si se cambia a la pestaña Estadísticas, cargar/renderizar gráficas
+        if (tabName === 'estadisticas') {
+            renderizarEstadisticas();
+        }
     // Renderizar listado de aislamientos con solicitudes asociadas (formato árbol)
     function renderizarAislamientos() {
         if (!aislamientosContainer) return;
