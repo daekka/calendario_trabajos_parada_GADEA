@@ -64,6 +64,8 @@ async function _cargarYRenderizar() {
     sinDatos.style.display = 'none';
     graficas.style.display = 'none';
     resumen.style.display = 'none';
+    const ganttDiv = document.getElementById('estadGantt');
+    if (ganttDiv) ganttDiv.style.display = 'none';
     loading.style.display = 'flex';
 
     try {
@@ -248,7 +250,49 @@ async function _cargarEstadisticasHistoricas() {
         cambiosPorDia.push(cambios);
     }
 
-    return { snapshotsPorDia, cambiosPorDia };
+    // Construir timeline por solicitud:
+    // - inicio: fecha en que se autoriza (primera vez que aparece como AUTORIZADO)
+    // - fin: fecha en que pasa a FINALIZADO
+    const timelineSolicitudes = new Map();
+    for (const snap of snapshotsPorDia) {
+        for (const [solicitud, datos] of snap.trabajosMap) {
+            if (!timelineSolicitudes.has(solicitud)) {
+                timelineSolicitudes.set(solicitud, {
+                    inicio: null,
+                    fin: null,
+                    estado: datos.estado,
+                    depto: datos.depto,
+                    descripcion: datos.descripcion,
+                    fechaInicio: datos.fechaInicio || null
+                });
+            }
+            const tl = timelineSolicitudes.get(solicitud);
+            // Actualizar último estado conocido
+            tl.estado = datos.estado;
+            tl.descripcion = datos.descripcion || tl.descripcion;
+            tl.depto = datos.depto;
+            if (!tl.fechaInicio && datos.fechaInicio) tl.fechaInicio = datos.fechaInicio;
+            // Inicio = primera fecha en que se autoriza
+            if (datos.estado === 'AUTORIZADO' && !tl.inicio) {
+                tl.inicio = snap.fecha;
+            }
+            // Fin = primera fecha en que pasa a FINALIZADO
+            if (datos.estado === 'FINALIZADO' && !tl.fin) {
+                tl.fin = snap.fecha;
+            }
+            // Registrar última fecha en que aparece
+            tl.ultimaAparicion = snap.fecha;
+        }
+    }
+    // Para los que no tienen fin:
+    // - Si desaparecen antes del último snapshot => usar última aparición como fin
+    // - Si siguen en el último snapshot => usar fecha del último snapshot (aún activos)
+    const ultimaFecha = snapshotsPorDia.length > 0 ? snapshotsPorDia[snapshotsPorDia.length - 1].fecha : null;
+    for (const [, tl] of timelineSolicitudes) {
+        if (!tl.fin) tl.fin = tl.ultimaAparicion || ultimaFecha;
+    }
+
+    return { snapshotsPorDia, cambiosPorDia, timelineSolicitudes };
 }
 
 // ============================================================
@@ -299,7 +343,7 @@ function _filtrarSnapshot(trabajosMap, filtros) {
 // Renderizar todas las gráficas
 // ============================================================
 function _renderizarGraficas(datosHistoricos) {
-    const { snapshotsPorDia, cambiosPorDia } = datosHistoricos;
+    const { snapshotsPorDia, cambiosPorDia, timelineSolicitudes } = datosHistoricos;
     const filtros = _obtenerFiltrosEstad();
 
     // Las fechas ahora filtran por "Válido de" del trabajo, no por fecha del snapshot
@@ -312,6 +356,8 @@ function _renderizarGraficas(datosHistoricos) {
     _renderizarChartEvolucion(snapshotsPorDia, filtros);
     _renderizarChartCambiosDia(cambiosPorDia, filtros, snapshotsPorDia);
 
+    // Renderizar Gantt
+    _renderizarChartGantt(timelineSolicitudes, filtros);
 }
 
 // ============================================================
@@ -579,6 +625,180 @@ function _renderizarChartCambiosDia(cambios, filtros, snapshots) {
             scales: {
                 x: { stacked: true },
                 y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+}
+
+// ============================================================
+// Gráfica Gantt: Timeline de solicitudes (barras horizontales)
+// ============================================================
+// Colores de departamento iguales al calendario
+const COLORES_DEPTO_CALENDARIO = {
+    MTO_ELECTRICO: { bg: '#90caf9', border: '#42a5f5' },
+    MTO_MECANICO:  { bg: '#f48fb1', border: '#f06292' },
+    GE:            { bg: '#a5d6a7', border: '#81c784' },
+    MTO_IC:        { bg: '#ffe082', border: '#ffd54f' },
+    OTROS:         { bg: '#eeeeee', border: '#bdbdbd' }
+};
+
+function _renderizarChartGantt(timelineSolicitudes, filtros) {
+    const container = document.getElementById('estadGantt');
+    const ctx = document.getElementById('chartGantt');
+    if (!ctx || !container) return;
+
+    if (_chartInstances.gantt) _chartInstances.gantt.destroy();
+
+    // Filtrar solicitudes: solo las autorizadas (con fecha de inicio en el Gantt) y dentro del rango
+    const items = [];
+    for (const [solicitud, tl] of timelineSolicitudes) {
+        // Solo mostrar solicitudes que hayan sido autorizadas (tienen inicio)
+        if (!tl.inicio) continue;
+        // Filtro por departamento
+        if (!filtros.deptos.has('TODOS') && !filtros.deptos.has(tl.depto)) continue;
+        // Filtro por fecha de inicio del trabajo (Válido de)
+        if (tl.fechaInicio) {
+            if (filtros.fechaDesde && tl.fechaInicio < filtros.fechaDesde) continue;
+            if (filtros.fechaHasta && tl.fechaInicio > filtros.fechaHasta) continue;
+        } else {
+            if (filtros.fechaDesde || filtros.fechaHasta) continue;
+        }
+        items.push({ solicitud, ...tl });
+    }
+
+    if (items.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+
+    // Ordenar por departamento y luego por fecha inicio
+    const deptoOrden = { MTO_ELECTRICO: 0, MTO_MECANICO: 1, GE: 2, MTO_IC: 3, OTROS: 4 };
+    items.sort((a, b) => {
+        const da = deptoOrden[a.depto] ?? 99;
+        const db = deptoOrden[b.depto] ?? 99;
+        if (da !== db) return da - db;
+        return a.inicio.localeCompare(b.inicio);
+    });
+
+    // Calcular rango temporal global
+    let minFecha = items[0].inicio;
+    let maxFecha = items[0].fin || items[0].inicio;
+    for (const it of items) {
+        if (it.inicio < minFecha) minFecha = it.inicio;
+        const f = it.fin || it.inicio;
+        if (f > maxFecha) maxFecha = f;
+    }
+
+    const toTs = (f) => new Date(f + 'T00:00:00').getTime();
+
+    // Labels: solicitud + descripción corta
+    const labels = items.map(it => {
+        const desc = it.descripcion ? it.descripcion.substring(0, 40) : '';
+        return `${it.solicitud} - ${desc}`;
+    });
+
+    // Datos: barras flotantes [inicio, fin]
+    const barData = items.map(it => {
+        const start = toTs(it.inicio);
+        const end = toTs(it.fin || it.inicio) + 86400000;
+        return [start, end];
+    });
+
+    // Colores según DEPARTAMENTO (mismos colores que el calendario)
+    const bgColors = items.map(it => {
+        const c = COLORES_DEPTO_CALENDARIO[it.depto] || COLORES_DEPTO_CALENDARIO.OTROS;
+        return c.bg;
+    });
+    const borderColors = items.map(it => {
+        const c = COLORES_DEPTO_CALENDARIO[it.depto] || COLORES_DEPTO_CALENDARIO.OTROS;
+        return c.border;
+    });
+
+    // Ajustar altura del wrapper según número de items
+    const wrapperDiv = container.querySelector('.gantt-wrapper');
+    const alturaMinima = 300;
+    const alturaPorItem = 28;
+    const alturaCalculada = Math.max(alturaMinima, items.length * alturaPorItem + 60);
+    if (wrapperDiv) wrapperDiv.style.height = alturaCalculada + 'px';
+
+    container.style.display = 'block';
+
+    // Construir etiquetas de leyenda de departamento
+    const deptosPresentes = [...new Set(items.map(it => it.depto))];
+
+    _chartInstances.gantt = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Duración',
+                data: barData,
+                backgroundColor: bgColors,
+                borderColor: borderColors,
+                borderWidth: 1,
+                borderSkipped: false,
+                barPercentage: 0.7,
+                categoryPercentage: 0.9
+            }]
+        },
+        plugins: [{
+            // Plugin para dibujar leyenda de departamentos
+            id: 'ganttLegend',
+            beforeDraw(chart) {
+                const ctx2 = chart.ctx;
+                const top = chart.chartArea.top - 20;
+                let x = chart.chartArea.left;
+                ctx2.save();
+                ctx2.font = '11px sans-serif';
+                for (const d of deptosPresentes) {
+                    const col = COLORES_DEPTO_CALENDARIO[d] || COLORES_DEPTO_CALENDARIO.OTROS;
+                    const lbl = COLORES_DEPARTAMENTO[d]?.label || d;
+                    ctx2.fillStyle = col.bg;
+                    ctx2.strokeStyle = col.border;
+                    ctx2.lineWidth = 1;
+                    ctx2.fillRect(x, top, 14, 12);
+                    ctx2.strokeRect(x, top, 14, 12);
+                    ctx2.fillStyle = '#333';
+                    ctx2.fillText(lbl, x + 18, top + 10);
+                    x += ctx2.measureText(lbl).width + 34;
+                }
+                ctx2.restore();
+            }
+        }],
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 25 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const item = items[context.dataIndex];
+                            const deptoLabel = COLORES_DEPARTAMENTO[item.depto]?.label || item.depto;
+                            const inicio = _formatearFechaCorta(item.inicio);
+                            const fin = item.fin ? _formatearFechaCorta(item.fin) : '...';
+                            return `${inicio} → ${fin}  |  ${item.estado}  |  ${deptoLabel}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        displayFormats: { day: 'd MMM' },
+                        tooltipFormat: 'd MMM yyyy'
+                    },
+                    min: toTs(minFecha),
+                    max: toTs(maxFecha) + 86400000,
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    ticks: { font: { size: 10 }, autoSkip: false }
+                }
             }
         }
     });

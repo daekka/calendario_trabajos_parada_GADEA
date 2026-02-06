@@ -10,6 +10,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 </head>
 <body>
     <div class="container">
@@ -196,6 +197,14 @@
                                 <div class="chart-wrapper"><canvas id="chartCambiosDia"></canvas></div>
                             </div>
                         </div>
+
+                        <div id="estadGantt" class="estadisticas-gantt" style="display:none;">
+                            <h3>Timeline de solicitudes</h3>
+                            <div class="gantt-wrapper">
+                                <canvas id="chartGantt"></canvas>
+                            </div>
+                        </div>
+
                         <div id="estadSinDatos" class="estadisticas-sin-datos">
                             <p class="empty-message">Haz clic en "Actualizar" para cargar las estadísticas históricas desde la nube.</p>
                         </div>
