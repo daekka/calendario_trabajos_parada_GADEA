@@ -29,14 +29,12 @@ const COLORES_DEPARTAMENTO = {
 async function renderizarEstadisticas() {
     const loading = document.getElementById('estadisticasLoading');
     const graficas = document.getElementById('estadGraficas');
-    const resumen = document.getElementById('estadResumen');
     const sinDatos = document.getElementById('estadSinDatos');
 
     // Si ya tenemos datos en caché, re-renderizar con filtros actuales
     if (_estadHistoricoCache) {
         sinDatos.style.display = 'none';
         graficas.style.display = 'grid';
-        resumen.style.display = 'flex';
         _renderizarGraficas(_estadHistoricoCache);
         return;
     }
@@ -51,7 +49,6 @@ async function renderizarEstadisticas() {
 async function _cargarYRenderizar() {
     const loading = document.getElementById('estadisticasLoading');
     const graficas = document.getElementById('estadGraficas');
-    const resumen = document.getElementById('estadResumen');
     const sinDatos = document.getElementById('estadSinDatos');
 
     if (!supabaseClient) {
@@ -63,7 +60,6 @@ async function _cargarYRenderizar() {
     // Mostrar loading
     sinDatos.style.display = 'none';
     graficas.style.display = 'none';
-    resumen.style.display = 'none';
     const ganttDiv = document.getElementById('estadGantt');
     if (ganttDiv) ganttDiv.style.display = 'none';
     loading.style.display = 'flex';
@@ -93,7 +89,6 @@ async function _cargarYRenderizar() {
 
         loading.style.display = 'none';
         graficas.style.display = 'grid';
-        resumen.style.display = 'flex';
 
         _renderizarGraficas(datosHistoricos);
 
@@ -349,79 +344,12 @@ function _renderizarGraficas(datosHistoricos) {
     // Las fechas ahora filtran por "Válido de" del trabajo, no por fecha del snapshot
     // Se pasan todos los snapshots y cambios; el filtro se aplica dentro de cada gráfica
 
-    // Renderizar tarjetas de resumen
-    _renderizarResumen(snapshotsPorDia, cambiosPorDia, filtros);
-
     // Renderizar gráficas
     _renderizarChartEvolucion(snapshotsPorDia, filtros);
     _renderizarChartCambiosDia(cambiosPorDia, filtros, snapshotsPorDia);
 
     // Renderizar Gantt
     _renderizarChartGantt(timelineSolicitudes, filtros);
-}
-
-// ============================================================
-// Tarjetas de resumen
-// ============================================================
-function _renderizarResumen(snapshots, cambios, filtros) {
-    const container = document.getElementById('estadResumen');
-    if (!container || snapshots.length === 0) return;
-
-    // Último snapshot filtrado por depto
-    const ultimoSnap = snapshots[snapshots.length - 1];
-    const trabajosFiltrados = _filtrarSnapshot(ultimoSnap.trabajosMap, filtros);
-
-    let totalTrabajos = trabajosFiltrados.size;
-    let autorizados = 0, aprobados = 0, finalizados = 0, pendientes = 0;
-    for (const [, datos] of trabajosFiltrados) {
-        if (datos.estado === 'AUTORIZADO') autorizados++;
-        else if (datos.estado === 'APROBADO') aprobados++;
-        else if (datos.estado === 'FINALIZADO') finalizados++;
-        else pendientes++;
-    }
-
-    // Sumar cambios totales en el rango
-    let totalCambiosAuto = 0, totalCambiosFin = 0, totalNuevos = 0;
-    for (const c of cambios) {
-        totalCambiosAuto += c.aAutorizado;
-        totalCambiosFin += c.aFinalizado;
-        totalNuevos += c.nuevos;
-    }
-
-    container.innerHTML = `
-        <div class="resumen-card resumen-total">
-            <span class="resumen-valor">${totalTrabajos}</span>
-            <span class="resumen-label">Total trabajos</span>
-        </div>
-        <div class="resumen-card resumen-autorizado">
-            <span class="resumen-valor">${autorizados}</span>
-            <span class="resumen-label">Autorizados</span>
-        </div>
-        <div class="resumen-card resumen-aprobado">
-            <span class="resumen-valor">${aprobados}</span>
-            <span class="resumen-label">Aprobados</span>
-        </div>
-        <div class="resumen-card resumen-finalizado">
-            <span class="resumen-valor">${finalizados}</span>
-            <span class="resumen-label">Finalizados</span>
-        </div>
-        <div class="resumen-card resumen-pendiente">
-            <span class="resumen-valor">${pendientes}</span>
-            <span class="resumen-label">Pendientes</span>
-        </div>
-        <div class="resumen-card resumen-cambios">
-            <span class="resumen-valor">${totalCambiosAuto}</span>
-            <span class="resumen-label">Autorizaciones (periodo)</span>
-        </div>
-        <div class="resumen-card resumen-cierres">
-            <span class="resumen-valor">${totalCambiosFin}</span>
-            <span class="resumen-label">Cierres (periodo)</span>
-        </div>
-        <div class="resumen-card resumen-nuevos">
-            <span class="resumen-valor">${totalNuevos}</span>
-            <span class="resumen-label">Nuevos (periodo)</span>
-        </div>
-    `;
 }
 
 // ============================================================
@@ -829,11 +757,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 await _cargarYRenderizar();
             } else {
                 const graficas = document.getElementById('estadGraficas');
-                const resumen = document.getElementById('estadResumen');
                 const sinDatos = document.getElementById('estadSinDatos');
                 sinDatos.style.display = 'none';
                 graficas.style.display = 'grid';
-                resumen.style.display = 'flex';
                 _renderizarGraficas(_estadHistoricoCache);
             }
         });
