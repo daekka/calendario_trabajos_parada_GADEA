@@ -10,6 +10,7 @@ let _chartInstances = {};
 // Colores consistentes con el resto de la aplicación
 const COLORES_ESTADO = {
     AUTORIZADO: { bg: 'rgba(76, 175, 80, 0.7)', border: '#4CAF50' },
+    AUTORIZADO_TOTAL: { bg: 'rgba(27, 94, 32, 0.7)', border: '#1B5E20' },
     APROBADO:   { bg: 'rgba(255, 152, 0, 0.7)', border: '#FF9800' },
     FINALIZADO: { bg: 'rgba(66, 66, 66, 0.7)',   border: '#424242' },
     PENDIENTE:  { bg: 'rgba(189, 189, 189, 0.7)', border: '#BDBDBD' },
@@ -364,7 +365,8 @@ function _renderizarChartEvolucion(snapshots, filtros) {
     if (_chartInstances.evolucion) _chartInstances.evolucion.destroy();
 
     const labels = [];
-    const dataAuto = [], dataApro = [], dataFin = [], dataPend = [], dataGestionados = [];
+    const dataAuto = [], dataApro = [], dataFin = [], dataPend = [], dataGestionados = [], dataAutoTotal = [];
+    const autorizadosAcumulados = new Set();
 
     for (const snap of snapshots) {
         labels.push(_formatearFechaCorta(snap.fecha));
@@ -376,11 +378,15 @@ function _renderizarChartEvolucion(snapshots, filtros) {
             else if (d.estado === 'FINALIZADO') fin++;
             else pend++;
         }
+        for (const [sol, d] of mapa) {
+            if (d.estado === 'AUTORIZADO') autorizadosAcumulados.add(sol);
+        }
         dataAuto.push(auto);
         dataApro.push(apro);
         dataFin.push(fin);
         dataPend.push(pend);
         dataGestionados.push(auto + fin);
+        dataAutoTotal.push(autorizadosAcumulados.size);
     }
 
     _chartInstances.evolucion = new Chart(ctx, {
@@ -396,6 +402,16 @@ function _renderizarChartEvolucion(snapshots, filtros) {
                     fill: false,
                     tension: 0.3,
                     pointRadius: 3
+                },
+                {
+                    label: 'Autorizados (total)',
+                    data: dataAutoTotal,
+                    borderColor: COLORES_ESTADO.AUTORIZADO_TOTAL.border,
+                    backgroundColor: COLORES_ESTADO.AUTORIZADO_TOTAL.bg,
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    borderDash: [6, 4]
                 },
                 {
                     label: 'Aprobados',
