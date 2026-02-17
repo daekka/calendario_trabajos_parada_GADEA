@@ -12,7 +12,8 @@ const COLORES_ESTADO = {
     AUTORIZADO: { bg: 'rgba(76, 175, 80, 0.7)', border: '#4CAF50' },
     APROBADO:   { bg: 'rgba(255, 152, 0, 0.7)', border: '#FF9800' },
     FINALIZADO: { bg: 'rgba(66, 66, 66, 0.7)',   border: '#424242' },
-    PENDIENTE:  { bg: 'rgba(189, 189, 189, 0.7)', border: '#BDBDBD' }
+    PENDIENTE:  { bg: 'rgba(189, 189, 189, 0.7)', border: '#BDBDBD' },
+    GESTIONADOS: { bg: 'rgba(244, 67, 54, 0.7)', border: '#F44336' }
 };
 
 const COLORES_DEPARTAMENTO = {
@@ -363,7 +364,7 @@ function _renderizarChartEvolucion(snapshots, filtros) {
     if (_chartInstances.evolucion) _chartInstances.evolucion.destroy();
 
     const labels = [];
-    const dataAuto = [], dataApro = [], dataFin = [], dataPend = [];
+    const dataAuto = [], dataApro = [], dataFin = [], dataPend = [], dataGestionados = [];
 
     for (const snap of snapshots) {
         labels.push(_formatearFechaCorta(snap.fecha));
@@ -379,6 +380,7 @@ function _renderizarChartEvolucion(snapshots, filtros) {
         dataApro.push(apro);
         dataFin.push(fin);
         dataPend.push(pend);
+        dataGestionados.push(auto + fin);
     }
 
     _chartInstances.evolucion = new Chart(ctx, {
@@ -409,6 +411,15 @@ function _renderizarChartEvolucion(snapshots, filtros) {
                     data: dataFin,
                     borderColor: COLORES_ESTADO.FINALIZADO.border,
                     backgroundColor: COLORES_ESTADO.FINALIZADO.bg,
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 3
+                },
+                {
+                    label: 'Gestionados',
+                    data: dataGestionados,
+                    borderColor: COLORES_ESTADO.GESTIONADOS.border,
+                    backgroundColor: COLORES_ESTADO.GESTIONADOS.bg,
                     fill: false,
                     tension: 0.3,
                     pointRadius: 3
